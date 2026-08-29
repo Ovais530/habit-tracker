@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Execution OS">
+<meta name="theme-color" content="#0A0C0F">
+<meta name="description" content="Personal execution OS — daily missions, business tracking, streaks and analytics.">
+<title>Execution OS</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" href="./icon-192.png" sizes="192x192">
+<link rel="icon" href="./icon-512.png" sizes="512x512">
+<style>
+:root{
+  --bg:#0A0C0F;
+  --surface:#14171C;
+  --surface2:#1B1F25;
+  --surface3:#20242B;
+  --border:#262B32;
+  --text:#E8EAED;
+  --text-dim:#8B93A1;
+  --text-faint:#565D6B;
+  --accent:#5B7CFA;
+  --accent-dim:rgba(91,124,250,0.14);
+  --accent-glow:rgba(91,124,250,0.35);
+  --green:#3DDC84;
+  --green-dim:rgba(61,220,132,0.14);
+  --yellow:#F5B942;
+  --yellow-dim:rgba(245,185,66,0.14);
+  --red:#F5555F;
+  --red-dim:rgba(245,85,95,0.14);
+  --radius:14px;
+  --radius-sm:10px;
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+[data-theme="light"]{
+  --bg:#F3F4F6;
+  --surface:#FFFFFF;
+  --surface2:#F7F8FA;
+  --surface3:#EEF0F3;
+  --border:#E2E4E9;
+  --text:#14171C;
+  --text-dim:#5A6272;
+  --text-faint:#9AA1AD;
+  --accent:#4C6EF5;
+  --accent-dim:rgba(76,110,245,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-display);
+  overscroll-behavior-y:none;
+  padding-top:var(--safe-top);
+  transition:background .2s ease,color .2s ease;
+}
+button,input,select,textarea{font-family:inherit;color:inherit;}
+button{cursor:pointer;border:none;background:none;}
+input,select,textarea{background:var(--surface3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:14px;}
+input:focus,select:focus,textarea:focus{outline:1px solid var(--accent);}
+::-webkit-scrollbar{width:0;height:0;}
+
+#app{display:flex;min-height:100%;}
+#sidebar{display:none;}
+#main{flex:1;min-width:0;padding-bottom:calc(84px + var(--safe-bottom));}
+#view{max-width:640px;margin:0 auto;padding:16px 16px 24px;}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto;padding:14px 16px 4px;}
+.topbar .brand{font-size:13px;letter-spacing:.14em;color:var(--text-faint);font-weight:600;text-transform:uppercase;}
+.topbar .actions{display:flex;gap:8px;}
+.iconbtn{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-dim);}
+.iconbtn:active{background:var(--surface3);}
+
+/* ---------- hero ---------- */
+.hero{background:linear-gradient(160deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-radius:20px;padding:22px 20px;margin-bottom:16px;position:relative;overflow:hidden;}
+.hero:before{content:'';position:absolute;top:-60px;right:-60px;width:180px;height:180px;background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);opacity:.5;}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+.hero-date{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;}
+.hero-greet{font-size:19px;font-weight:700;}
+.streak-chip{display:flex;align-items:center;gap:4px;background:var(--surface3);border:1px solid var(--border);padding:5px 10px;border-radius:100px;font-size:12px;font-weight:600;color:var(--yellow);white-space:nowrap;}
+.hero-score-row{display:flex;align-items:flex-end;gap:18px;margin-top:16px;position:relative;z-index:1;}
+.hero-score{font-family:var(--font-mono);font-size:52px;font-weight:700;line-height:1;letter-spacing:-1px;}
+.hero-score-sub{font-size:13px;color:var(--text-dim);margin-bottom:4px;}
+.hero-rating{font-size:12px;font-weight:600;margin-top:2px;}
+.hero-meta{display:flex;gap:16px;margin-top:14px;position:relative;z-index:1;}
+.hero-meta-item{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+.hero-meta-item b{display:block;font-family:var(--font-mono);font-size:15px;color:var(--text);font-weight:600;letter-spacing:0;text-transform:none;margin-top:2px;}
+
+/* ---------- mission cards ---------- */
+.section-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin:20px 0 8px;padding-left:2px;}
+.mission-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;position:relative;}
+.mission-card.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 8px 24px -8px var(--accent-glow);}
+.mission-card.done{opacity:.55;}
+.mission-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.mission-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.06em;}
+.mission-title .flag{font-size:10px;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:5px;letter-spacing:.08em;}
+.mission-nums{font-family:var(--font-mono);font-size:22px;font-weight:600;display:flex;align-items:baseline;gap:3px;}
+.mission-nums .target{color:var(--text-faint);font-size:15px;}
+.tickbar{display:flex;gap:2px;height:16px;margin-bottom:12px;}
+.tick{flex:1;border-radius:2px;background:var(--surface3);}
+.tick.filled{background:var(--accent);}
+.tick.over{background:var(--green);}
+.mission-card.done .tick.filled{background:var(--green);}
+.chiprow{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.chip{font-size:11px;padding:5px 10px;border-radius:100px;background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-weight:600;}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btnrow{display:flex;gap:8px;}
+.qbtn{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:12px 0;font-size:14px;font-weight:700;font-family:var(--font-mono);text-align:center;}
+.qbtn:active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.qbtn.neg{color:var(--text-faint);}
+.mission-sub{font-size:11px;color:var(--text-faint);margin-top:8px;}
+.toggle-btn{width:100%;padding:14px;border-radius:10px;background:var(--surface3);border:1px solid var(--border);font-weight:700;font-size:14px;letter-spacing:.04em;}
+.toggle-btn.on{background:var(--green-dim);color:var(--green);border-color:var(--green);}
+.checklist{display:flex;flex-direction:column;gap:6px;}
+.check-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);}
+.check-row:last-child{border-bottom:none;}
+.check-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-faint);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.check-box.on{background:var(--green);border-color:var(--green);color:#0A0C0F;}
+.check-label{font-size:13px;flex:1;}
+.check-row.strike .check-label{color:var(--text-faint);text-decoration:line-through;}
+.mission-complete-badge{font-size:11px;font-weight:700;color:var(--green);letter-spacing:.06em;}
+.next-pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px dashed var(--border);border-radius:100px;padding:8px 14px;font-size:12px;color:var(--text-dim);font-weight:600;margin-top:6px;}
+
+/* ---------- small stat cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.card-title{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.statgrid.two{grid-template-columns:repeat(2,1fr);}
+.stat{background:var(--surface2);border-radius:10px;padding:10px;text-align:left;}
+.stat-num{font-family:var(--font-mono);font-size:19px;font-weight:700;}
+.stat-label{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.stat-btns{display:flex;gap:4px;margin-top:6px;}
+.mini-btn{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:6px;font-size:10px;padding:5px 0;font-weight:700;font-family:var(--font-mono);}
+.mini-btn:active{background:var(--accent);color:#fff;}
+
+/* ---------- collapsible morning ---------- */
+.collapse-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.collapse-body{margin-top:10px;}
+.collapse-body.hidden{display:none;}
+
+/* ---------- bottom nav ---------- */
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,23,28,0.92);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);z-index:50;}
+[data-theme="light"] .bottomnav{background:rgba(255,255,255,0.92);}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text-faint);}
+.navbtn .navicon{font-size:18px;}
+.navbtn.active{color:var(--accent);}
+
+/* ---------- fab ---------- */
+.fab{position:fixed;right:18px;bottom:calc(84px + var(--safe-bottom));width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px -6px var(--accent-glow);z-index:49;}
+
+/* ---------- sheets / modals ---------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.overlay.center{align-items:center;padding:20px;}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:18px 18px calc(24px + var(--safe-bottom));border:1px solid var(--border);border-bottom:none;}
+.overlay.center .sheet{border-radius:18px;border-bottom:1px solid var(--border);max-height:85vh;}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 14px;}
+.sheet-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+.close-x{position:absolute;top:14px;right:14px;color:var(--text-faint);font-size:20px;}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--safe-bottom));background:var(--surface3);border:1px solid var(--border);border-radius:100px;padding:9px 8px 9px 16px;display:none;align-items:center;gap:10px;z-index:200;font-size:13px;box-shadow:0 8px 20px -6px rgba(0,0,0,0.5);}
+#toast button{color:var(--accent);font-weight:700;font-size:12px;padding:6px 12px;background:var(--surface2);border-radius:100px;}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:5px;font-weight:600;letter-spacing:.03em;}
+.field input,.field select{width:100%;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.btn-primary{width:100%;background:var(--accent);color:#fff;padding:13px;border-radius:10px;font-weight:700;font-size:14px;margin-top:6px;}
+.btn-secondary{width:100%;background:var(--surface3);border:1px solid var(--border);padding:12px;border-radius:10px;font-weight:600;font-size:13px;color:var(--text-dim);margin-top:8px;}
+.btn-danger{color:var(--red);}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.pill{padding:6px 12px;border-radius:100px;font-size:12px;font-weight:600;background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ---------- settings list ---------- */
+.settings-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+.settings-group-head{padding:14px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.settings-group-body{padding:14px 16px;}
+.daycard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.daycard-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.daycard-head b{font-size:13px;}
+.break-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.break-row input{flex:1;}
+.xrow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.xrow:last-child{border-bottom:none;}
+.xrow label{font-size:12px;color:var(--text-dim);}
+.xrow input{width:70px;text-align:right;}
+
+/* ---------- week/month/analytics ---------- */
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.cmp-row:last-child{border-bottom:none;}
+.cmp-label{font-size:13px;color:var(--text-dim);}
+.cmp-vals{display:flex;align-items:baseline;gap:8px;}
+.cmp-cur{font-family:var(--font-mono);font-size:17px;font-weight:700;}
+.cmp-prev{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);}
+.cmp-delta{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;}
+.cmp-delta.up{background:var(--green-dim);color:var(--green);}
+.cmp-delta.down{background:var(--red-dim);color:var(--red);}
+.cmp-delta.flat{background:var(--surface3);color:var(--text-faint);}
+.barchart{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:6px;}
+.barcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.bar{width:100%;border-radius:5px 5px 2px 2px;background:var(--accent);min-height:3px;}
+.barcol span{font-size:9px;color:var(--text-faint);margin-top:5px;}
+.heatgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.heatcell{aspect-ratio:1;border-radius:6px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);position:relative;}
+.heatcell.has{color:#fff;font-weight:700;}
+.heatcell.pad{background:transparent;}
+.weekday-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px;}
+.weekday-hdr span{text-align:center;font-size:9px;color:var(--text-faint);text-transform:uppercase;}
+.insight{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 12px;font-size:12.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.5;}
+.insight.warn{border-color:var(--yellow);}
+.insight.bad{border-color:var(--red);}
+.tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--surface2);padding:4px;border-radius:10px;}
+.tab{flex:1;text-align:center;padding:9px 0;border-radius:8px;font-size:12px;font-weight:700;color:var(--text-faint);}
+.tab.active{background:var(--surface3);color:var(--text);}
+.range-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.rtab{padding:6px 12px;border-radius:100px;font-size:11px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--text-faint);}
+.rtab.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.funnel-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.funnel-row:last-child{border-bottom:none;}
+.funnel-bar{height:6px;border-radius:4px;background:var(--accent);margin-top:5px;}
+.empty{text-align:center;padding:40px 16px;color:var(--text-faint);}
+.empty .big{font-size:32px;margin-bottom:8px;}
+.level-badge{display:flex;align-items:center;gap:10px;}
+.level-num{font-family:var(--font-mono);font-size:26px;font-weight:700;color:var(--accent);}
+.xpbar-track{background:var(--surface3);height:8px;border-radius:5px;overflow:hidden;flex:1;}
+.xpbar-fill{background:var(--accent);height:100%;}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ach-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;opacity:.35;}
+.ach-item.on{opacity:1;border-color:var(--accent);}
+.ach-emoji{font-size:20px;}
+.ach-name{font-size:10px;font-weight:700;margin-top:4px;letter-spacing:.03em;}
+.ach-desc{font-size:9px;color:var(--text-faint);margin-top:2px;}
+.goal-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;}
+.goal-item.done{opacity:.5;}
+.goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.goal-name{font-size:13px;font-weight:700;}
+.progress-track{background:var(--surface3);height:6px;border-radius:4px;overflow:hidden;margin-top:6px;}
+.progress-fill{background:var(--accent);height:100%;}
+.milestone-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.milestone-row:last-child{border-bottom:none;}
+.milestone-row.done .milestone-label{text-decoration:line-through;color:var(--text-faint);}
+.milestone-num{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);width:20px;}
+.link-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.link-row:last-child{border-bottom:none;}
+.link-row .l{font-size:13px;font-weight:600;}
+.link-row .r{color:var(--text-faint);font-size:14px;}
+
+@media(min-width:900px){
+  #app{max-width:1180px;margin:0 auto;}
+  #sidebar{display:flex;flex-direction:column;width:220px;flex-shrink:0;padding:20px 12px;border-right:1px solid var(--border);position:sticky;top:0;height:100vh;}
+  .sidebrand{font-size:13px;font-weight:700;letter-spacing:.1em;padding:0 10px;margin-bottom:24px;color:var(--text-dim);}
+  .sidelink{padding:11px 12px;border-radius:10px;font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:2px;}
+  .sidelink.active{background:var(--accent-dim);color:var(--accent);}
+  .bottomnav{display:none;}
+  #main{padding-bottom:24px;}
+  .fab{bottom:24px;}
+  #view{max-width:640px;padding:24px 24px 40px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar"></div>
+  <div id="main">
+    <div class="topbar">
+      <div class="brand">EXECUTION OS</div>
+      <div class="actions">
+        <button class="iconbtn" onclick="openFocus()">◎</button>
+        <button class="iconbtn" onclick="openQuickSheet()">+</button>
+      </div>
+    </div>
+    <div id="view"></div>
+  </div>
+</div>
+<div class="bottomnav" id="bottomnav"></div>
+<button class="fab" onclick="openQuickSheet()">+</button>
+<div id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   EXECUTION OS — core engine
+   ============================================================ */
+// storage key lives in IDB_KEY, defined alongside the IndexedDB engine below
+let DB=null;
+let UI={ view:'today', settingsTab:'schedule', analyticsTab:'business', weekOffset:0, monthOffset:0, calMonthOffset:0, focusOpen:false, selectedChannel:'emails', morningOpen:true, nightOpen:true, calendarSelectedDate:null, weekRange:'7', scheduleOpen:true };
+let saveTimer=null;
+let undoStack=null;
+
+/* ---------- date helpers ---------- */
+function pad(n){return n<10?'0'+n:''+n;}
+function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function todayStr(){return fmtDate(new Date());}
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function addDays(s,n){const d=parseDate(s);d.setDate(d.getDate()+n);return fmtDate(d);}
+function dayAbbr(s){return ['sun','mon','tue','wed','thu','fri','sat'][parseDate(s).getDay()];}
+function dayFull(s){return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][parseDate(s).getDay()];}
+function monLabel(s){return ['January','February','March','April','May','June','July','August','September','October','November','December'][parseDate(s).getMonth()];}
+function startOfWeek(s){ // Monday
+  const d=parseDate(s); const day=d.getDay(); const diff=(day===0?-6:1-day); d.setDate(d.getDate()+diff); return fmtDate(d);
+}
+function startOfMonth(s){const d=parseDate(s);return fmtDate(new Date(d.getFullYear(),d.getMonth(),1));}
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function humanDate(s){const d=parseDate(s);return dayFull(s)+', '+monLabel(s)+' '+d.getDate();}
+function minsBetween(start,end){
+  const [sh,sm]=start.split(':').map(Number), [eh,em]=end.split(':').map(Number);
+  return Math.max(0,(eh*60+em)-(sh*60+sm));
+}
+function blockTimeLabel(b){ return b.start===b.end ? b.start : `${b.start}–${b.end}`; }
+function shortDate(s){const d=parseDate(s);return monLabel(s).slice(0,3)+' '+d.getDate();}
+
+/* ---------- defaults ---------- */
+function cb(start,end,label){return {start,end,type:'class',label};}
+function bb(start,end,label,offline){return {start,end,type:'break',label,offline:offline!==false};}
+function rt(start,end,label){return {start,end,type:'routine',label};}
+function ml(start,end,label){return {start,end,type:'meal',label};}
+function bz(start,end,label){return {start,end,type:'business',label:label||'Business deep work'};}
+function sy(start,end,label){return {start,end,type:'study',label:label||'University study'};}
+function en(start,end,label){return {start,end,type:'english',label:label||'English — 30 minutes'};}
+function gb(start,end,label){return {start,end,type:'gym',label:label||'Gym block — 20 travel + 60 workout + 20 travel'};}
+function rc(start,end,label){return {start,end,type:'recovery',label:label||'Recovery'};}
+function sm(start,label){return {start,end:start,type:'sleep',label:label||'Sleep target'};}
+const BLOCK_TYPE_META={
+  class:{icon:'🎓'}, break:{icon:'☕'}, business:{icon:'⚙️'}, study:{icon:'🎓'},
+  english:{icon:'🇬🇧'}, gym:{icon:'🏋️'}, meal:{icon:'🍽️'}, routine:{icon:'🧭'},
+  recovery:{icon:'🌿'}, sleep:{icon:'😴'}
+};
+function morningBlocks(){
+  return [rt('06:00','06:30','Wake · Fajr · Water · Morning routine'), ml('06:30','07:00','Breakfast')];
+}
+// evening tail shared by the four university days — starts once the last
+// campus block ends at 16:05 for all of them.
+function eveningTail(opts){
+  opts=opts||{};
+  const skipSecondBusiness=!!opts.skipSecondBusiness;
+  const gymToday=opts.gym!==false;
+  const blocks=[
+    bb('16:05','16:35','Commute / recovery',true),
+    ml('16:35','17:05','Recovery / Dinner'),
+    bz('17:05','18:05'),
+    sy('18:05','19:05'),
+    en('19:05','19:35')
+  ];
+  if(skipSecondBusiness) blocks.push(rc('19:35','20:35','Recovery / light review'));
+  else blocks.push(bz('19:35','20:35','Business deep work / build'));
+  if(gymToday) blocks.push(gb('20:35','21:35'));
+  else blocks.push(rc('20:35','21:35','Recovery'));
+  blocks.push(rt('21:35','22:10','Shutdown · Skincare · Prepare for sleep'));
+  blocks.push(sm('22:30'));
+  return blocks;
+}
+// exact power-day template as specified — used for Thu/Sat/Sun.
+function powerDayBlocks(opts){
+  opts=opts||{};
+  const gymToday=opts.gym!==false;
+  return [
+    rt('06:00','06:30','Wake · Fajr · Water · Morning routine'),
+    ml('06:30','07:00','Breakfast'),
+    bz('07:00','09:00'),
+    bb('09:00','09:20','Break',false),
+    bz('09:20','11:20'),
+    bb('11:20','11:40','Break',false),
+    sy('11:40','13:10'),
+    ml('13:10','14:00','Lunch · Prayer · Recovery'),
+    bz('14:00','16:00'),
+    bb('16:00','16:30','Break / walk / recovery',false),
+    sy('16:30','18:00'),
+    gymToday?gb('18:00','19:40'):rc('18:00','19:40','Recovery / extra business time'),
+    ml('19:40','20:10','Dinner / shower'),
+    bz('20:10','21:40','Business deep work / client delivery / follow-ups'),
+    en('21:40','22:10'),
+    rt('22:10','22:30','Shutdown · Skincare · Prepare for sleep'),
+    sm('22:30')
+  ];
+}
+function defaultSettings(){
+  return {
+    schemaVersion:4,
+    wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
+    weekSchedule:{
+      mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Ideology & Constitution'),cb('08:55','09:45','Ideology & Constitution'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Finance'),cb('11:40','12:30','Psychology'),bb('12:35','13:25','Free',true),cb('13:30','14:20','Civics & Community'),cb('14:25','15:15','Business Finance'),cb('15:20','16:05','Business Finance'),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:45, prospectingTarget:0, salesCapacity:50 },
+      tue:{ isUniversityDay:true, heavy:false, isPowerDay:true, powerCapacityDay:false, homeTime:'11:45',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Intro to OOP'),bb('08:55','09:45','Free',true),cb('09:50','10:40','Psychology'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free — home, business if online',false),bb('12:35','13:25','Free — home, business if online',false),cb('13:30','14:20','Intro to OOP'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      wed:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Business Math II'),cb('08:55','09:45','Business Math II'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Economics'),cb('11:40','12:30','Business Math II'),cb('12:35','13:25','Business Economics'),bb('13:30','14:20','Free',true),cb('14:25','15:15','Civics & Community'),cb('15:20','16:05','Intro to OOP'),
+          ...eveningTail({skipSecondBusiness:true})],
+        studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
+      thu:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
+        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:90, prospectingTarget:50, salesCapacity:50, businessDeepWorkTarget:240 },
+      fri:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'12:45',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','OOP Lab'),cb('08:55','09:45','OOP Lab'),cb('09:50','10:40','OOP Lab'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free',true),bb('12:35','13:25','Jummah prep / lunch',true),cb('13:30','14:20','Business Economics'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      sat:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
+        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240 },
+      sun:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', weeklyReview:true,
+        blocks:powerDayBlocks({gym:false}), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240, gymRest:true }
+    },
+    targets:{
+      outreach:{ university:{min:10,std:50,stretch:75}, power:{min:10,std:100,stretch:150} },
+      study:60, english:30, portfolio:30,
+      gymDays:['mon','tue','wed','thu','fri','sat'],
+      followupRatio:0.2,
+      weeklyOutreachTarget:250,
+      weeklyProspectTarget:300,
+      businessLearning:20, businessLearningEnabled:true,
+      revenueGoal:2000
+    },
+    xp:{ outreach25:25,outreach50:50,outreach75:75,outreach100:100, followup:1, positiveReply:25, call:50, client:500,
+         study30:25, study60:50, english30:25, gym:50, morningRoutine:25, nightRoutine:25, sleepTarget:25, classAttended:100 },
+    score:{ business:35, university:25, study:15, english:10, fitness:5, routine:5, recovery:5 },
+    theme:'dark'
+  };
+}
+const ENGLISH_ROTATION={mon:'Listening',tue:'Speaking',wed:'Reading',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Reading'};
+function defaultRecord(dateStr){
+  return {
+    date:dateStr,
+    outreach:{emails:0,dms:0,other:0},
+    prospects:0, qualified:0, audited:0, contactsFound:0,
+    followupsDue:0, followupsCompleted:0,
+    replies:0, positiveReplies:0, calls:0, clientsClosed:0, revenue:0,
+    study:0, english:0,
+    gymDone:false,
+    portfolio:0,
+    clientWork:0, clientWorkTarget:0,
+    morning:{wake:false,fajr:false,fresh:false,clothes:false,breakfast:false,leave:false},
+    night:{skincare:false,teeth:false,clothes:false,bag:false,plan:false,phoneAway:false},
+    classAttended:false,
+    sleepHours:null,
+    recoveryDay:false, examMode:'normal',
+    businessLearning:0, assignments:0, businessMinutes:0,
+    dayComplete:false, notes:''
+  };
+}
+function defaultGoals(){
+  return {
+    milestones:[
+      {id:'m1',label:'Learn core email marketing',done:false},
+      {id:'m2',label:'Build portfolio',done:false},
+      {id:'m3',label:'Start outreach',done:false},
+      {id:'m4',label:'First positive reply',done:false},
+      {id:'m5',label:'First sales call',done:false},
+      {id:'m6',label:'First $100',done:false},
+      {id:'m7',label:'First $500 client',done:false},
+      {id:'m8',label:'$1,000/month',done:false},
+      {id:'m9',label:'$3,000/month',done:false},
+      {id:'m10',label:'$5,000/month',done:false},
+      {id:'m11',label:'First contractor',done:false},
+      {id:'m12',label:'Agency systems',done:false},
+      {id:'m13',label:'Scale agency',done:false}
+    ],
+    custom:[]
+  };
+}
+
+/* ---------- IndexedDB storage engine ----------
+   Replaces the previous Claude-hosted storage API. Exposes the equivalent of the
+   requested getDB()/saveDB()/clearDB() primitives as idbGetState(),
+   idbSetState() and idbClearState() — different names only because the
+   app already has an unrelated saveDB() (the debounce trigger used
+   ~80 times throughout the app for UI-driven writes). Nothing else in
+   the app touches storage directly; it all goes through loadDB()/saveDB()/
+   persistNow() below, exactly as before. */
+const IDB_NAME='executionOS';
+const IDB_VERSION=1;
+const IDB_STORE='kv';
+const IDB_KEY='appstate';
+let _idbOpenPromise=null;
+function idbOpen(){
+  if(_idbOpenPromise) return _idbOpenPromise;
+  _idbOpenPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){ reject(new Error('IndexedDB is not available in this browser')); return; }
+    let req;
+    try{ req=indexedDB.open(IDB_NAME,IDB_VERSION); }
+    catch(err){ reject(err); return; }
+    req.onupgradeneeded=(e)=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess=(e)=>resolve(e.target.result);
+    req.onerror=(e)=>reject((e.target&&e.target.error)||new Error('IndexedDB open failed'));
+    req.onblocked=()=>reject(new Error('IndexedDB open blocked by another tab'));
+  });
+  return _idbOpenPromise;
+}
+function idbGetState(){
+  return idbOpen().then(db=>new Promise((resolve,reject)=>{
+    try{
+      const tx=db.transaction(IDB_STORE,'readonly');
+      const req=tx.objectStore(IDB_STORE).get(IDB_KEY);
+      req.onsuccess=()=>resolve(req.result!==undefined?req.result:null);
+      req.onerror=()=>reject(req.error||new Error('IndexedDB read failed'));
+    }catch(err){ reject(err); }
+  }));
+}
+function idbSetState(value){
+  return idbOpen().then(db=>new Promise((resolve,reject)=>{
+    try{
+      const tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).put(value,IDB_KEY);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('IndexedDB write failed'));
+      tx.onabort=()=>reject(tx.error||new Error('IndexedDB write aborted'));
+    }catch(err){ reject(err); }
+  }));
+}
+function idbClearState(){
+  return idbOpen().then(db=>new Promise((resolve,reject)=>{
+    try{
+      const tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).delete(IDB_KEY);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('IndexedDB clear failed'));
+    }catch(err){ reject(err); }
+  }));
+}
+let STORAGE_UNAVAILABLE=false;
+
+/* ---------- app-level storage (uses the IndexedDB engine above) ---------- */
+async function loadDB(){
+  let loaded=null, readFailed=false, readError=null;
+  try{
+    loaded=await idbGetState();
+  }catch(e){
+    readFailed=true; readError=e;
+  }
+  if(loaded){
+    DB=loaded;
+    DB.settings=Object.assign(defaultSettings(),DB.settings||{});
+    DB.settings.targets=Object.assign(defaultSettings().targets,DB.settings.targets||{});
+    DB.settings.xp=Object.assign(defaultSettings().xp,DB.settings.xp||{});
+    DB.settings.score=Object.assign(defaultSettings().score,DB.settings.score||{});
+    if(!DB.records)DB.records={};
+    if(!DB.goals)DB.goals=defaultGoals();
+    if(!DB.meta)DB.meta={bestStreak:0};
+    if(!DB.pool)DB.pool={ready:0};
+    if(!DB.schemaVersion || DB.schemaVersion<4){
+      // one-time migration: adopt the new final university timetable and
+      // updated weekly business targets. Existing records, goals,
+      // streaks, XP and meta are left completely untouched.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.settings.targets.gymDays=defaultSettings().targets.gymDays;
+      DB.settings.targets.weeklyOutreachTarget=defaultSettings().targets.weeklyOutreachTarget;
+      DB.settings.targets.weeklyProspectTarget=defaultSettings().targets.weeklyProspectTarget;
+      DB.settings.targets.revenueGoal=DB.settings.targets.revenueGoal||defaultSettings().targets.revenueGoal;
+      if(DB.settings.executionMode==null)DB.settings.executionMode=true;
+      // migrate old boolean examMode to the new 3-tier string per record
+      Object.values(DB.records).forEach(r=>{
+        if(typeof r.examMode==='boolean') r.examMode=r.examMode?'exam':'normal';
+        if(r.businessMinutes==null) r.businessMinutes=0;
+      });
+      DB.schemaVersion=4;
+      saveDB();
+    }
+  }else if(readFailed){
+    // CRITICAL: local storage could not be read (IndexedDB unavailable,
+    // private browsing, corrupted DB, blocked by another tab, etc). Do NOT
+    // fabricate a blank DB and persist it — that would permanently destroy
+    // any real data already on this device the moment storage recovers.
+    // Run this session entirely in memory instead and tell the user clearly.
+    console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+    STORAGE_UNAVAILABLE=true;
+    showStorageErrorBanner();
+  }else{
+    // Genuinely first launch on this device: no error, just nothing stored yet.
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+    await persistNow();
+  }
+}
+function saveDB(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(persistNow,450);
+}
+// Flush any pending save immediately when the tab is backgrounded/closed —
+// on iOS Safari a debounced setTimeout can get killed before it fires,
+// which is the most common cause of "my data didn't save".
+function flushSave(){ clearTimeout(saveTimer); persistNow(); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')flushSave(); });
+window.addEventListener('pagehide',flushSave);
+window.addEventListener('blur',flushSave);
+let saveFailCount=0;
+async function persistNow(){
+  if(STORAGE_UNAVAILABLE){
+    // We already know local storage is broken for this session — avoid
+    // spamming failed writes. The banner (with its Retry button) is already
+    // showing; a reload is what re-attempts storage cleanly.
+    return false;
+  }
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      await idbSetState(DB);
+      saveFailCount=0;
+      hideSaveWarning();
+      return true;
+    }catch(e){
+      if(attempt<2){ await new Promise(r=>setTimeout(r,500*(attempt+1))); continue; }
+      saveFailCount++;
+      console.warn('IndexedDB save failed after retries',e);
+      showSaveWarning();
+      return false;
+    }
+  }
+}
+function showSaveWarning(){
+  let w=document.getElementById('saveWarning');
+  if(!w){
+    w=document.createElement('div');
+    w.id='saveWarning';
+    w.style.cssText='position:fixed;top:calc(var(--safe-top) + 8px);left:50%;transform:translateX(-50%);background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:100px;padding:6px 14px;font-size:11px;font-weight:700;z-index:300;max-width:92vw;text-align:center;';
+    document.body.appendChild(w);
+  }
+  w.textContent='⚠ Not saving — storage write failed';
+}
+function hideSaveWarning(){
+  const w=document.getElementById('saveWarning');
+  if(w && !w.dataset.critical) w.remove();
+}
+function showStorageErrorBanner(){
+  let w=document.getElementById('saveWarning');
+  if(!w){
+    w=document.createElement('div');
+    w.id='saveWarning';
+    document.body.appendChild(w);
+  }
+  w.dataset.critical='1';
+  w.style.cssText='position:fixed;top:calc(var(--safe-top) + 8px);left:50%;transform:translateX(-50%);background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:100px;padding:6px 8px 6px 14px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;z-index:300;max-width:92vw;';
+  w.innerHTML='⚠ Local storage unavailable — nothing was erased <button onclick="location.reload()" style="background:var(--surface2);color:var(--red);border-radius:100px;padding:5px 10px;font-weight:700;">Retry</button>';
+}
+
+/* ---------- record access ---------- */
+function getRecord(dateStr){
+  if(!DB.records[dateStr]){
+    const rec=defaultRecord(dateStr);
+    const prev=DB.records[addDays(dateStr,-1)];
+    if(prev){
+      const prevTotal=(prev.outreach.emails+prev.outreach.dms+prev.outreach.other);
+      rec.followupsDue=Math.round(prevTotal*DB.settings.targets.followupRatio);
+    }
+    DB.records[dateStr]=rec;
+    saveDB();
+  }
+  return DB.records[dateStr];
+}
+function totalOutreach(rec){return rec.outreach.emails+rec.outreach.dms+rec.outreach.other;}
+function getDaySchedule(dateStr){
+  const day=dayAbbr(dateStr);
+  let sched=DB.settings.weekSchedule[day];
+  if(!sched) sched=defaultSettings().weekSchedule[day];
+  if(!sched.blocks) sched.blocks=[];
+  if(sched.studyTarget==null) sched.studyTarget=DB.settings.targets.study||60;
+  if(sched.englishTarget==null) sched.englishTarget=DB.settings.targets.english||30;
+  if(sched.buildTarget==null) sched.buildTarget=DB.settings.targets.portfolio||30;
+  if(sched.prospectingTarget==null) sched.prospectingTarget=0;
+  if(sched.salesCapacity==null) sched.salesCapacity=50;
+  if(sched.powerCapacityDay==null) sched.powerCapacityDay=false;
+  if(sched.businessDeepWorkTarget==null) sched.businessDeepWorkTarget=0;
+  if(sched.gymRest==null) sched.gymRest=false;
+  return sched;
+}
+function getDayType(dateStr){
+  return getDaySchedule(dateStr).isUniversityDay?'university':'power';
+}
+function getDayBadge(dateStr){
+  const sc=getDaySchedule(dateStr);
+  if(sc.heavy)return {emoji:'🎓',label:'HEAVY UNIVERSITY DAY',color:'var(--yellow)'};
+  if(sc.isPowerDay)return {emoji:'🔥',label:'POWER DAY',color:'var(--accent)'};
+  if(sc.isUniversityDay)return {emoji:'🎓',label:'UNIVERSITY DAY',color:'var(--text-dim)'};
+  return {emoji:'⚡',label:'FLEX DAY',color:'var(--text-dim)'};
+}
+function isGymDay(dateStr){
+  const sc=getDaySchedule(dateStr);
+  if(sc.gymRest)return false;
+  return DB.settings.targets.gymDays.includes(dayAbbr(dateStr));
+}
+function getOutreachTargets(dateStr){
+  const rec=getRecord(dateStr);
+  const sc=getDaySchedule(dateStr);
+  const capacity=sc.salesCapacity||0;
+  const min=Math.min(10,capacity);
+  const newAvailable=Math.max(0,capacity-rec.followupsDue);
+  if(rec.examMode==='exam')return {min:0,std:0,stretch:0,capacity:0,newAvailable:0};
+  if(rec.examMode==='prep')return {min,std:Math.min(newAvailable,min),stretch:min,capacity,newAvailable:Math.min(newAvailable,min)};
+  return {min,std:newAvailable,stretch:capacity,capacity,newAvailable};
+}
+function suggestBreakActivity(mins,offline){
+  if(!offline)return 'Follow-ups / outreach / replies if you have signal';
+  if(mins<=45)return 'English audio, then quick recovery';
+  if(mins<=75)return 'Recovery/food, then English';
+  if(mins<=100)return 'Recovery/food → English → university study';
+  return 'Recovery/food → English → university study → recovery/food before class';
+}
+
+/* ---------- path utils ---------- */
+function getPath(obj,path){return path.split('.').reduce((o,k)=>o&&o[k],obj);}
+function setPath(obj,path,val){const parts=path.split('.');let o=obj;for(let i=0;i<parts.length-1;i++)o=o[parts[i]];o[parts[parts.length-1]]=val;}
+
+/* ---------- missions ---------- */
+function getMissions(dateStr){
+  const rec=getRecord(dateStr);
+  const s=DB.settings;
+  const sc=getDaySchedule(dateStr);
+  const ot=getOutreachTargets(dateStr);
+  const exam=rec.examMode||'normal';
+  const missions=[];
+  if(rec.clientWorkTarget>0){
+    missions.push({key:'clientWork',label:'CLIENT WORK',icon:'💼',current:rec.clientWork,target:rec.clientWorkTarget,type:'counter',
+      field:'clientWork',amounts:[15,30,60],unit:'min'});
+  }
+  missions.push({key:'followups',label:'FOLLOW-UPS',icon:'📨',current:rec.followupsCompleted,target:rec.followupsDue,type:'counter',
+    field:'followupsCompleted', amounts:[5,10], unit:'', adjustTarget:true});
+  if(exam!=='exam'){
+    missions.push({key:'outreach',label:'OUTREACH',icon:'📣',current:totalOutreach(rec),target:ot.std,type:'counter',
+      sub:`capacity ${ot.capacity} · ${rec.followupsDue} follow-ups due today`, amounts:[5,10,25], channelPick:true, unit:''});
+  }
+  if(sc.prospectingTarget>0 && exam==='normal'){
+    missions.push({key:'prospecting',label:'PROSPECTING',icon:'🔎',current:rec.prospects,target:sc.prospectingTarget,type:'counter',
+      field:'prospects',amounts:[5,10,25],unit:'', sub:'Qualified prospects added to the pipeline'});
+  }
+  if(sc.powerCapacityDay && sc.businessDeepWorkTarget>0 && exam==='normal'){
+    missions.push({key:'businessDeepWork',label:'BUSINESS DEEP WORK',icon:'⚙️',current:rec.businessMinutes,target:sc.businessDeepWorkTarget,type:'counter',
+      field:'businessMinutes',amounts:[30,60,90],unit:'min',sub:'Prospecting / outreach / follow-ups / client build time'});
+  }
+  let studyTarget=sc.studyTarget;
+  if(exam==='prep')studyTarget=Math.max(sc.studyTarget,180);
+  if(exam==='exam')studyTarget=Math.max(sc.studyTarget,240);
+  missions.push({key:'study',label:'UNIVERSITY STUDY',icon:'🎓',current:rec.study,
+    target:studyTarget,type:'counter',
+    field:'study',amounts: studyTarget>=150?[30,60,90]:[15,30,60],unit:'min'});
+  missions.push({key:'english',label:'ENGLISH',icon:'🇬🇧',current:rec.english,target:sc.englishTarget,type:'counter',
+    field:'english',amounts:[15,30],unit:'min',sub:`Today's focus: ${ENGLISH_ROTATION[dayAbbr(dateStr)]}`});
+  if(sc.buildTarget>0 && exam==='normal'){
+    missions.push({key:'build',label:'BUILD',icon:'🏗️',current:rec.portfolio,target:sc.buildTarget,type:'counter',
+      field:'portfolio',amounts:[15,30,60],unit:'min',sub:'Portfolio / client build work'});
+  }
+  if(s.targets.businessLearningEnabled && s.targets.businessLearning>0 && exam==='normal'){
+    missions.push({key:'businessLearning',label:'BUSINESS LEARNING',icon:'🧠',current:rec.businessLearning,target:s.targets.businessLearning,type:'counter',
+      field:'businessLearning',amounts:[10,20,30],unit:'min',sub:'Secondary — never at the expense of execution'});
+  }
+  if(isGymDay(dateStr)){
+    missions.push({key:'gym',label:'GYM',icon:'🏋️',current:rec.gymDone?1:0,target:1,type:'toggle',field:'gymDone',sub:'~100 min block: 20 travel + 60 workout + 20 travel'});
+  }
+  const nightKeys=Object.keys(rec.night);
+  missions.push({key:'night',label:'NIGHT ROUTINE',icon:'🌙',current:nightKeys.filter(k=>rec.night[k]).length,target:nightKeys.length,type:'checklist',field:'night',
+    items:[['skincare','Skincare'],['teeth','Brush teeth'],['clothes','Prepare clothes'],['bag','Prepare bag'],['plan','Plan tomorrow'],['phoneAway','Phone away']]});
+  return missions;
+}
+function currentMissionIndex(missions){
+  for(let i=0;i<missions.length;i++) if(missions[i].current<missions[i].target) return i;
+  return missions.length; // all done
+}
+
+/* ---------- score & xp ---------- */
+function tierXP(val,tiers){ // tiers: [[thresh,xp],...] descending
+  for(const [t,x] of tiers) if(val>=t) return x;
+  return 0;
+}
+function xpForDay(dateStr){
+  const rec=DB.records[dateStr]; if(!rec)return 0;
+  const x=DB.settings.xp; let total=0;
+  total+=tierXP(totalOutreach(rec),[[100,x.outreach100],[75,x.outreach75],[50,x.outreach50],[25,x.outreach25]]);
+  total+=rec.followupsCompleted*x.followup;
+  total+=rec.positiveReplies*x.positiveReply;
+  total+=rec.calls*x.call;
+  total+=rec.clientsClosed*x.client;
+  total+=tierXP(rec.study,[[60,x.study60],[30,x.study30]]);
+  total+=tierXP(rec.english,[[30,x.english30]]);
+  if(rec.gymDone)total+=x.gym;
+  if(Object.values(rec.morning).every(Boolean))total+=x.morningRoutine;
+  if(Object.values(rec.night).every(Boolean))total+=x.nightRoutine;
+  if(rec.sleepHours!=null && rec.sleepHours>=7)total+=x.sleepTarget;
+  if(rec.classAttended)total+=x.classAttended;
+  return Math.round(total);
+}
+function scoreBreakdown(dateStr){
+  const rec=DB.records[dateStr];
+  const w=DB.settings.score;
+  if(!rec)return {ratios:{business:0,university:0,study:0,english:0,fitness:0,routine:0,recovery:0},weights:w,score:0};
+  const ot=getOutreachTargets(dateStr);
+  const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):1;
+  const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):1;
+  const businessRatio=(outreachRatio+fupRatio)/2;
+  const sc=getDaySchedule(dateStr);
+  const isUni=getDayType(dateStr)==='university';
+  const universityRatio=isUni?(rec.classAttended?1:0.4):1;
+  const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
+  const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
+  const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
+  const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
+  const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
+  const routineRatio=(morningRatio+nightRatio)/2;
+  let recoveryRatio=1;
+  if(rec.sleepHours!=null) recoveryRatio=Math.max(0,Math.min(1,rec.sleepHours/7));
+  const ratios={business:businessRatio,university:universityRatio,study:studyRatio,english:englishRatio,fitness:fitnessRatio,routine:routineRatio,recovery:recoveryRatio};
+  const totalW=Object.values(w).reduce((a,b)=>a+b,0)||100;
+  let score=Math.round(Object.keys(ratios).reduce((sum,k)=>sum+ratios[k]*(w[k]||0),0)/totalW*100);
+  if(rec.recoveryDay) score=Math.max(score,70);
+  score=Math.max(0,Math.min(100,score));
+  return {ratios,weights:w,score};
+}
+function scoreForDay(dateStr){
+  const rec=DB.records[dateStr]; if(!rec)return 0;
+  return scoreBreakdown(dateStr).score;
+}
+function ratingFor(score){
+  if(score>=90)return {emoji:'🔥',label:'EXCEPTIONAL',color:'var(--accent)'};
+  if(score>=80)return {emoji:'🟢',label:'EXCELLENT',color:'var(--green)'};
+  if(score>=70)return {emoji:'🟡',label:'SOLID',color:'var(--yellow)'};
+  if(score>=50)return {emoji:'🟠',label:'NEEDS IMPROVEMENT',color:'var(--yellow)'};
+  return {emoji:'🔴',label:'LOW',color:'var(--red)'};
+}
+function isNoZeroDay(dateStr){
+  const rec=DB.records[dateStr]; if(!rec)return false;
+  if(rec.recoveryDay)return true;
+  const exam=rec.examMode||'normal';
+  const ot=getOutreachTargets(dateStr);
+  const outreachOk=ot.min<=0 || totalOutreach(rec)>=Math.min(10,ot.min);
+  const fupOk=rec.followupsDue<=0 || rec.followupsCompleted>=rec.followupsDue;
+  const engOk=rec.english>=20;
+  const studyOk=exam==='exam'?rec.study>=60:rec.study>=30;
+  const morningOk=Object.values(rec.morning).filter(Boolean).length>=3;
+  if(exam==='exam')return fupOk && engOk && studyOk && morningOk; // outreach not required during exams
+  return outreachOk && fupOk && engOk && studyOk && morningOk;
+}
+function computeStreak(){
+  let streak=0; let d=todayStr();
+  while(DB.records[d] && isNoZeroDay(d)){ streak++; d=addDays(d,-1); }
+  return streak;
+}
+function lifetimeXP(){
+  return Object.keys(DB.records).reduce((sum,d)=>sum+xpForDay(d),0);
+}
+const LEVEL_THRESH=[0,500,1500,3000,5000,7500,10500,14000,18000,22500,27500,33500,40000,47000,54500];
+function levelInfo(xp){
+  let lvl=1;
+  for(let i=0;i<LEVEL_THRESH.length;i++){ if(xp>=LEVEL_THRESH[i]) lvl=i+1; }
+  const curThresh=LEVEL_THRESH[lvl-1]!=null?LEVEL_THRESH[lvl-1]:LEVEL_THRESH[LEVEL_THRESH.length-1]+(lvl-LEVEL_THRESH.length)*7000;
+  const nextThresh=LEVEL_THRESH[lvl]!=null?LEVEL_THRESH[lvl]:curThresh+7000;
+  const pct=Math.min(1,(xp-curThresh)/(nextThresh-curThresh||1));
+  return {level:lvl,curThresh,nextThresh,pct,xp};
+}
+
+/* ---------- aggregation ---------- */
+/* ---------- graphs (safe reads — never auto-create records) ---------- */
+function metricOutreach(d){const r=DB.records[d]; return r?totalOutreach(r):0;}
+function metricProspects(d){const r=DB.records[d]; return r?r.prospects:0;}
+function metricFollowups(d){const r=DB.records[d]; return r?r.followupsCompleted:0;}
+function metricReplies(d){const r=DB.records[d]; return r?r.replies:0;}
+function metricPositive(d){const r=DB.records[d]; return r?r.positiveReplies:0;}
+function metricCalls(d){const r=DB.records[d]; return r?r.calls:0;}
+function metricClients(d){const r=DB.records[d]; return r?r.clientsClosed:0;}
+function metricRevenue(d){const r=DB.records[d]; return r?r.revenue:0;}
+function metricStudy(d){const r=DB.records[d]; return r?r.study:0;}
+function metricEnglish(d){const r=DB.records[d]; return r?r.english:0;}
+function metricGym(d){const r=DB.records[d]; return r&&r.gymDone?1:0;}
+function metricScore(d){return DB.records[d]?scoreForDay(d):0;}
+function buildSeries(metricFn,days){
+  const start=addDays(todayStr(),-(days-1));
+  const arr=[];
+  for(let i=0;i<days;i++) arr.push(metricFn(addDays(start,i)));
+  return arr;
+}
+function sparkline(values,color){
+  const w=300,h=64,pad=4;
+  const max=Math.max(1,...values);
+  const stepX=values.length>1?(w-2*pad)/(values.length-1):0;
+  const pts=values.map((v,i)=>{
+    const x=pad+i*stepX;
+    const y=h-pad-(v/max)*(h-2*pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const areaPts=`${pad},${h-pad} ${pts} ${(w-pad).toFixed(1)},${h-pad}`;
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px;display:block;" preserveAspectRatio="none">
+    <polyline points="${areaPts}" fill="${color}" opacity="0.12" stroke="none"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+function graphCard(title,values,color,unit){
+  const total=Math.round(values.reduce((a,b)=>a+b,0)*10)/10;
+  const avg=values.length?Math.round((total/values.length)*10)/10:0;
+  return `<div class="card">
+    <div class="card-title">${title}</div>
+    ${sparkline(values,color)}
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-faint);">
+      <span>Total: <b style="color:var(--text);">${total}${unit||''}</b></span>
+      <span>Daily avg: <b style="color:var(--text);">${avg}${unit||''}</b></span>
+    </div>
+  </div>`;
+}
+function sumRange(startStr,days){
+  const out={outreach:0,followups:0,prospects:0,replies:0,positiveReplies:0,calls:0,clients:0,revenue:0,study:0,english:0,gym:0,portfolio:0,xp:0,scoreSum:0,scoreCount:0,sleepSum:0,sleepCount:0,
+    classesAttended:0,assignments:0,businessLearning:0,skincareDays:0};
+  for(let i=0;i<days;i++){
+    const d=addDays(startStr,i);
+    const rec=DB.records[d];
+    if(!rec)continue;
+    out.outreach+=totalOutreach(rec);
+    out.followups+=rec.followupsCompleted;
+    out.prospects+=rec.prospects;
+    out.replies+=rec.replies;
+    out.positiveReplies+=rec.positiveReplies;
+    out.calls+=rec.calls;
+    out.clients+=rec.clientsClosed;
+    out.revenue+=rec.revenue;
+    out.study+=rec.study;
+    out.english+=rec.english;
+    if(rec.gymDone)out.gym++;
+    out.portfolio+=rec.portfolio;
+    out.xp+=xpForDay(d);
+    out.scoreSum+=scoreForDay(d); out.scoreCount++;
+    if(rec.sleepHours!=null){out.sleepSum+=rec.sleepHours;out.sleepCount++;}
+    if(rec.classAttended)out.classesAttended++;
+    out.assignments+=(rec.assignments||0);
+    out.businessLearning+=(rec.businessLearning||0);
+    if(rec.night&&rec.night.skincare)out.skincareDays++;
+  }
+  out.avgScore=out.scoreCount?Math.round(out.scoreSum/out.scoreCount):0;
+  out.avgSleep=out.sleepCount?(out.sleepSum/out.sleepCount).toFixed(1):null;
+  return out;
+}
+function delta(cur,prev){
+  const diff=cur-prev;
+  const pct=prev>0?Math.round((diff/prev)*100):(cur>0?100:0);
+  return {diff,pct,dir:diff>0?'up':diff<0?'down':'flat'};
+}
+function fmtDelta(cur,prev,unit){
+  unit=unit||'';
+  const d=delta(cur,prev);
+  const sign=d.diff>0?'+':'';
+  const arrow=d.dir==='up'?'▲':d.dir==='down'?'▼':'–';
+  return `<span class="cmp-delta ${d.dir}">${arrow} ${sign}${d.diff}${unit} (${sign}${d.pct}%)</span>`;
+}
+
+/* ---------- achievements ---------- */
+function achievementDefs(){
+  const dates=Object.keys(DB.records);
+  const lifeOutreach=dates.reduce((s,d)=>s+totalOutreach(DB.records[d]),0);
+  const lifeRevenue=dates.reduce((s,d)=>s+(DB.records[d].revenue||0),0);
+  const lifeClients=dates.reduce((s,d)=>s+(DB.records[d].clientsClosed||0),0);
+  const anyDay100=dates.some(d=>totalOutreach(DB.records[d])>=100);
+  let weekWarrior=false;
+  for(const d of dates){ if(sumRange(startOfWeek(d),7).outreach>=500){weekWarrior=true;break;} }
+  const bestStreak=Math.max(DB.meta.bestStreak||0,computeStreak());
+  return [
+    {id:'first_rep',emoji:'🥇',name:'FIRST REP',desc:'First outreach sent',on:lifeOutreach>=1},
+    {id:'100club',emoji:'💯',name:'100 CLUB',desc:'100 outreach in one day',on:anyDay100},
+    {id:'weekwarrior',emoji:'⚔️',name:'WEEK WARRIOR',desc:'500 outreach in one week',on:weekWarrior},
+    {id:'nozero7',emoji:'🔥',name:'NO-ZERO',desc:'7 consecutive days',on:bestStreak>=7},
+    {id:'firstclient',emoji:'🤝',name:'FIRST CLIENT',desc:'First paying client',on:lifeClients>=1},
+    {id:'1k',emoji:'💰',name:'$1K',desc:'First $1,000 earned',on:lifeRevenue>=1000},
+    {id:'10k',emoji:'📨',name:'10K OUTREACH',desc:'10,000 lifetime reps',on:lifeOutreach>=10000},
+    {id:'50k',emoji:'🚀',name:'50K OUTREACH',desc:'50,000 lifetime reps',on:lifeOutreach>=50000},
+  ];
+}
+
+/* ---------- insights ---------- */
+function generateInsights(){
+  const insights=[];
+  const dates=Object.keys(DB.records).sort();
+  if(dates.length<7) return [{text:'Keep logging — insights appear after about a week of data.',cls:''}];
+  const last28=dates.filter(d=>d>=addDays(todayStr(),-28));
+  const byDow={};
+  last28.forEach(d=>{ const dow=dayAbbr(d); byDow[dow]=(byDow[dow]||0)+totalOutreach(DB.records[d]); });
+  const best=Object.entries(byDow).sort((a,b)=>b[1]-a[1])[0];
+  if(best) insights.push({text:`Your outreach tends to be strongest on ${best[0][0].toUpperCase()+best[0].slice(1)}.`,cls:''});
+  const uniDays=last28.filter(d=>getDayType(d)==='university');
+  const powerDays=last28.filter(d=>getDayType(d)!=='university');
+  if(uniDays.length&&powerDays.length){
+    const uniAvg=uniDays.reduce((s,d)=>s+totalOutreach(DB.records[d]),0)/uniDays.length;
+    const powAvg=powerDays.reduce((s,d)=>s+totalOutreach(DB.records[d]),0)/powerDays.length;
+    if(powAvg>0){
+      const dropPct=Math.round((1-uniAvg/powAvg)*100);
+      if(dropPct>10) insights.push({text:`University days show ${dropPct}% lower outreach output than power days.`,cls:''});
+    }
+  }
+  const engDays=last28.filter(d=>DB.records[d].english>=30).length;
+  insights.push({text:`English consistency is ${Math.round(engDays/last28.length*100)}% over the last ${last28.length} days.`,cls:''});
+  // sleep correlation
+  const withSleep=last28.filter(d=>DB.records[d].sleepHours!=null);
+  if(withSleep.length>=6){
+    const good=withSleep.filter(d=>DB.records[d].sleepHours>=7);
+    const bad=withSleep.filter(d=>DB.records[d].sleepHours<7);
+    if(good.length&&bad.length){
+      const goodAvg=good.reduce((s,d)=>s+totalOutreach(DB.records[d]),0)/good.length;
+      const badAvg=bad.reduce((s,d)=>s+totalOutreach(DB.records[d]),0)/bad.length;
+      if(goodAvg>badAvg*1.1) insights.push({text:'You tend to complete more outreach on days when you sleep 7+ hours.',cls:''});
+    }
+  }
+  // 3-week decline detection
+  const w1=sumRange(addDays(startOfWeek(todayStr()),-21),7).outreach;
+  const w2=sumRange(addDays(startOfWeek(todayStr()),-14),7).outreach;
+  const w3=sumRange(addDays(startOfWeek(todayStr()),-7),7).outreach;
+  if(w1>w2 && w2>w3 && w3>0){
+    insights.push({text:'Outreach has declined for 3 consecutive weeks. Suggested action: protect your first business block on university days.',cls:'bad'});
+  }
+  return insights.length?insights:[{text:'No strong patterns detected yet — keep logging.',cls:''}];
+}
+function detectWeakArea(){
+  const start=addDays(todayStr(),-6);
+  const dates=[]; for(let i=0;i<7;i++)dates.push(addDays(start,i));
+  const withData=dates.filter(d=>DB.records[d]);
+  if(withData.length<3)return null;
+  const areas=[];
+  // business: outreach + follow-up completion vs capacity/due
+  let capSum=0,outSum=0,dueSum=0,doneSum=0;
+  withData.forEach(d=>{ const ot=getOutreachTargets(d); const r=DB.records[d];
+    capSum+=ot.std; outSum+=totalOutreach(r); dueSum+=r.followupsDue; doneSum+=r.followupsCompleted; });
+  const businessPct=Math.round((( (capSum>0?outSum/capSum:1) + (dueSum>0?doneSum/dueSum:1) )/2)*100);
+  areas.push({key:'business',label:'Business execution (outreach + follow-ups)',pct:Math.min(100,businessPct),
+    reason:`You completed ${outSum}/${capSum} planned outreach and ${doneSum}/${dueSum} due follow-ups this week.`,
+    action:'Complete follow-ups before starting new outreach tomorrow.'});
+  // study
+  let studyTargetSum=0,studySum=0;
+  withData.forEach(d=>{ const sc=getDaySchedule(d); studyTargetSum+=sc.studyTarget; studySum+=DB.records[d].study; });
+  areas.push({key:'study',label:'University study',pct:studyTargetSum>0?Math.min(100,Math.round(studySum/studyTargetSum*100)):100,
+    reason:`You studied ${Math.round(studySum/60*10)/10}h of a ${Math.round(studyTargetSum/60*10)/10}h weekly target.`,
+    action:'Protect your next power-day study block first, before business tasks.'});
+  // english
+  let engTargetSum=0,engSum=0;
+  withData.forEach(d=>{ const sc=getDaySchedule(d); engTargetSum+=sc.englishTarget; engSum+=DB.records[d].english; });
+  areas.push({key:'english',label:'English practice',pct:engTargetSum>0?Math.min(100,Math.round(engSum/engTargetSum*100)):100,
+    reason:`You logged ${engSum} of ${engTargetSum} target minutes of English this week.`,
+    action:'Use your next commute or break for English audio.'});
+  // prospecting
+  let prospTargetSum=0,prospSum=0;
+  withData.forEach(d=>{ const sc=getDaySchedule(d); prospTargetSum+=sc.prospectingTarget; prospSum+=DB.records[d].prospects; });
+  if(prospTargetSum>0){
+    areas.push({key:'prospecting',label:'Qualified prospect generation',pct:Math.min(100,Math.round(prospSum/prospTargetSum*100)),
+      reason:`${prospSum} / ${prospTargetSum} qualified prospects prepared this week.`,
+      action:'Increase your next power-day prospecting block by 60 minutes.'});
+  }
+  // fitness
+  const gymDaysCount=withData.filter(d=>isGymDay(d)).length;
+  const gymDone=withData.filter(d=>DB.records[d].gymDone).length;
+  if(gymDaysCount>0){
+    areas.push({key:'fitness',label:'Gym consistency',pct:Math.round(gymDone/gymDaysCount*100),
+      reason:`${gymDone} / ${gymDaysCount} scheduled gym sessions completed.`,
+      action:'Pre-plan your gym block time the night before.'});
+  }
+  areas.sort((a,b)=>a.pct-b.pct);
+  return areas[0];
+}
+
+function nowClockString(){
+  const n=new Date(); let h=n.getHours(); const m=pad(n.getMinutes()); const ap=h>=12?'PM':'AM'; h=h%12; if(h===0)h=12;
+  return `${h}:${m} ${ap}`;
+}
+function getCurrentBlock(dateStr){
+  if(dateStr!==todayStr())return null;
+  const sc=getDaySchedule(dateStr);
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  for(const b of sc.blocks){
+    const s=minsBetween('00:00',b.start), e=minsBetween('00:00',b.end);
+    if(nowMins>=s && nowMins<e) return Object.assign({},b,{remainingMins:e-nowMins});
+  }
+  return null;
+}
+function getNowNext(dateStr){
+  const block=getCurrentBlock(dateStr);
+  const missions=getMissions(dateStr);
+  const curIdx=currentMissionIndex(missions);
+  return {block, nowMission:missions[curIdx]||null, nextMission:missions[curIdx+1]||null, missions, curIdx};
+}
+function markMissionComplete(dateStr,missionKey){
+  const rec=getRecord(dateStr);
+  const m=getMissions(dateStr).find(x=>x.key===missionKey);
+  if(!m)return;
+  if(m.type==='counter') setPath(rec,m.field,m.target);
+  else if(m.type==='toggle') setPath(rec,m.field,true);
+  else if(m.type==='checklist') Object.keys(rec[m.field]).forEach(k=>rec[m.field][k]=true);
+  saveDB(); renderView();
+}
+function toggleExecutionMode(){
+  DB.settings.executionMode=!DB.settings.executionMode;
+  saveDB(); renderView();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function el(id){return document.getElementById(id);}
+function render(){
+  renderSidebar();
+  renderBottomNav();
+  renderView();
+}
+function renderSidebar(){
+  const items=[['today','Today'],['week','Week'],['month','Month'],['analytics','Analytics'],['calendar','Calendar'],['goals','Goals'],['settings','Settings']];
+  el('sidebar').innerHTML=`<div class="sidebrand">EXECUTION OS</div>`+items.map(([k,l])=>
+    `<button class="sidelink ${UI.view===k?'active':''}" onclick="setView('${k}')" style="text-align:left;width:100%;">${l}</button>`).join('');
+}
+function renderBottomNav(){
+  const items=[['today','TODAY','◉'],['week','WEEK','▤'],['month','MONTH','▦'],['analytics','ANALYTICS','◈'],['more','MORE','•••']];
+  el('bottomnav').innerHTML=items.map(([k,l,icon])=>{
+    const active=(k==='more')?['calendar','goals','settings'].includes(UI.view):UI.view===k;
+    return `<button class="navbtn ${active?'active':''}" onclick="${k==='more'?'openMoreSheet()':`setView('${k}')`}"><span class="navicon">${icon}</span>${l}</button>`;
+  }).join('');
+}
+function setView(v){ UI.view=v; render(); window.scrollTo(0,0); }
+
+function renderView(){
+  const v=el('view');
+  if(UI.view==='today') v.innerHTML=renderToday();
+  else if(UI.view==='week') v.innerHTML=renderWeek();
+  else if(UI.view==='month') v.innerHTML=renderMonth();
+  else if(UI.view==='analytics') v.innerHTML=renderAnalytics();
+  else if(UI.view==='calendar') v.innerHTML=renderCalendar();
+  else if(UI.view==='goals') v.innerHTML=renderGoals();
+  else if(UI.view==='settings') v.innerHTML=renderSettings();
+}
+
+/* ---------- TODAY ---------- */
+function renderScheduleTimeline(d){
+  const sc=getDaySchedule(d);
+  if(!sc.blocks.length) return '';
+  const curBlock=getCurrentBlock(d);
+  const isCurrentBlock=(b)=> curBlock && b.start===curBlock.start && b.end===curBlock.end && b.label===curBlock.label;
+  const visibleBlocks=UI.scheduleOpen?sc.blocks:sc.blocks.filter(isCurrentBlock);
+  return `
+  <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>CURRENT TASK WINDOW${sc.homeTime?` · home ~${sc.homeTime}`:''}</span>
+    <span style="cursor:pointer;color:var(--text-faint);font-size:11px;" onclick="UI.scheduleOpen=!UI.scheduleOpen;renderView();">${UI.scheduleOpen?'▲ collapse':'▼ full day'}</span>
+  </div>
+  <div class="card">
+    ${visibleBlocks.map(b=>{
+      const active=isCurrentBlock(b);
+      return `<div class="cmp-row" style="${active?'background:var(--accent-dim);margin:0 -16px;padding:9px 16px;border-radius:8px;border-bottom:none;':''}">
+        <div>
+          <div class="cmp-label" style="color:${active?'var(--accent)':'var(--text)'};font-weight:600;">${(BLOCK_TYPE_META[b.type]||{}).icon||'•'} ${blockTimeLabel(b)} ${b.label}${b.type==='break'&&b.offline?' 📴':''}${active?' · NOW':''}</div>
+          ${b.type==='break'?`<div style="font-size:11px;color:var(--text-faint);margin-top:2px;">${suggestBreakActivity(minsBetween(b.start,b.end),b.offline)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+    ${(!UI.scheduleOpen && !curBlock)?'<div style="font-size:12px;color:var(--text-faint);text-align:center;padding:8px 0;">No active block right now — tap "full day" to see the whole schedule.</div>':''}
+  </div>`;
+}
+function renderToday(){
+  const d=todayStr();
+  const rec=getRecord(d);
+  const br=scoreBreakdown(d);
+  const score=br.score;
+  const rating=ratingFor(score);
+  const streak=computeStreak();
+  const xp=xpForDay(d);
+  const sc=getDaySchedule(d);
+  const badge=getDayBadge(d);
+  const ot=getOutreachTargets(d);
+  const {block,nowMission,nextMission,missions,curIdx}=getNowNext(d);
+  const execMode=DB.settings.executionMode;
+
+  // context strip: what's happening on the clock right now, if today
+  let contextHtml='';
+  if(block){
+    const icon=(BLOCK_TYPE_META[block.type]||{}).icon||'•';
+    if(block.type==='class'){
+      contextHtml=`<div class="insight" style="border-color:var(--text-faint);">${icon} IN CLASS · ${block.label} · ends ${block.end} (${block.remainingMins}m left)</div>`;
+    }else if(block.type==='break'){
+      contextHtml=`<div class="insight">${block.offline?'📴':'🌐'} ${block.label.toUpperCase()} · ends ${block.end} (${block.remainingMins}m left) · ${suggestBreakActivity(minsBetween(block.start,block.end),block.offline)}</div>`;
+    }else{
+      contextHtml=`<div class="insight" style="border-color:var(--text-faint);">${icon} ${block.label} · ends ${block.end} (${block.remainingMins}m left)</div>`;
+    }
+  }
+
+  // NOW / NEXT
+  let nowNextHtml='';
+  if(!nowMission){
+    nowNextHtml=`<div class="card" style="text-align:center;"><div style="font-size:28px;margin-bottom:6px;">✅</div><div style="font-weight:700;margin-bottom:10px;">ALL MISSIONS COMPLETE</div><button class="btn-primary" onclick="openDayComplete()">MARK DAY COMPLETE</button></div>`;
+  }else{
+    nowNextHtml=`<div class="section-label" style="margin-top:0;">NOW</div>`
+      + renderMissionCard(nowMission,d,true,false,false)
+      + `<div class="btnrow" style="margin:-2px 0 6px;"><button class="btn-secondary" style="margin-top:0;" onclick="markMissionComplete('${d}','${nowMission.key}')">✓ MARK ${nowMission.label} COMPLETE</button></div>`;
+    if(nextMission){
+      nowNextHtml+=`<div style="text-align:center;margin-bottom:6px;"><div class="next-pill">NEXT → ${nextMission.icon} ${nextMission.label} ${nextMission.unit?`· ${nextMission.target}${nextMission.unit}`:`· ${nextMission.target}`}</div></div>`;
+    }
+  }
+
+  // compact today checklist
+  const checklistHtml=missions.map(m=>{
+    const doneM=m.current>=m.target;
+    return `<div class="cmp-row" style="padding:9px 0;">
+      <div class="cmp-label">${m.icon} ${m.label}</div>
+      <div class="cmp-vals">${doneM?'<span style="color:var(--green);font-weight:700;font-size:12px;">✅</span>':`<span class="cmp-cur" style="font-size:14px;">${m.current}/${m.target}${m.unit||''}</span>`}</div>
+    </div>`;
+  }).join('');
+
+  const catList=[['business','Business'],['university','University'],['study','Study'],['english','English'],['fitness','Fitness'],['routine','Routine']];
+
+  const execToggleBtn=`<button class="iconbtn" style="width:auto;padding:0 12px;font-size:11px;font-weight:700;letter-spacing:.04em;${execMode?'color:var(--accent);border-color:var(--accent);':''}" onclick="toggleExecutionMode()">🤖 ${execMode?'EXECUTION MODE':'FULL VIEW'}</button>`;
+
+  let html=`
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-date">${humanDate(d)}</div>
+        <div class="hero-greet" style="color:${badge.color}">${badge.emoji} ${badge.label}</div>
+      </div>
+      <div class="streak-chip">🔥 ${streak} DAY${streak===1?'':'S'}</div>
+    </div>
+    <div class="hero-score-row">
+      <div><div class="hero-score" style="color:${rating.color}">${score}</div></div>
+      <div class="hero-score-sub">/100<div class="hero-rating" style="color:${rating.color}">${rating.emoji} ${rating.label}</div></div>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-meta-item">TIME<b>${nowClockString()}</b></div>
+      <div class="hero-meta-item">XP<b>${xp}</b></div>
+      <div class="hero-meta-item">OUTREACH<b>${totalOutreach(rec)}</b></div>
+      <div class="hero-meta-item">STUDY<b>${rec.study}m</b></div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">${execToggleBtn}</div>
+
+  ${contextHtml}
+  ${nowNextHtml}
+  ${renderScheduleTimeline(d)}
+
+  <div class="section-label">TODAY'S PROGRESS</div>
+  <div class="card">
+    <div class="progress-track" style="height:10px;margin-bottom:12px;"><div class="progress-fill" style="width:${score}%;background:${rating.color};"></div></div>
+    <div class="statgrid two">
+      ${catList.map(([k,label])=>`<div class="stat"><div class="stat-num" style="font-size:16px;">${Math.round(br.ratios[k]*100)}%</div><div class="stat-label">${label}</div></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section-label">TODAY'S CHECKLIST</div>
+  <div class="card">${checklistHtml}</div>
+
+  ${execMode?'':renderTodayFullExtras(d)}
+  `;
+  return html;
+}
+function renderTodayFullExtras(d){
+  const rec=getRecord(d);
+  const sc=getDaySchedule(d);
+  const ot=getOutreachTargets(d);
+  const missions=getMissions(d);
+  const curIdx=currentMissionIndex(missions);
+  const morningItems=[['wake','Wake on time'],['fajr','Fajr'],['fresh','Freshen up'],['clothes','Change clothes'],['breakfast','Breakfast'],['leave','Leave home']];
+  const morningDone=morningItems.filter(([k])=>rec.morning[k]).length;
+  let missionsHtml='';
+  missions.forEach((m,i)=>{
+    const done=m.current>=m.target;
+    missionsHtml+=renderMissionCard(m,d,i===curIdx,done,i===curIdx+1);
+  });
+
+  return `
+  <div class="card">
+    <div class="collapse-head" onclick="UI.morningOpen=!UI.morningOpen;renderView();">
+      <div class="card-title" style="margin-bottom:0;">MORNING · ${morningDone}/6</div>
+      <span style="color:var(--text-faint);font-size:12px;">${UI.morningOpen?'▲':'▼'}</span>
+    </div>
+    <div class="collapse-body ${UI.morningOpen?'':'hidden'}">
+      <div class="checklist">
+        ${morningItems.map(([k,label])=>`
+          <div class="check-row ${rec.morning[k]?'strike':''}" onclick="toggleNested('morning','${k}')">
+            <div class="check-box ${rec.morning[k]?'on':''}">${rec.morning[k]?'✓':''}</div>
+            <div class="check-label">${label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">FULL MISSION QUEUE</div>
+  ${missionsHtml}
+
+
+  <div class="card">
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${ot.capacity}</div><div class="stat-label">Planned capacity</div></div>
+      <div class="stat"><div class="stat-num">${rec.followupsDue}</div><div class="stat-label">Follow-ups due</div></div>
+      <div class="stat"><div class="stat-num">${ot.newAvailable}</div><div class="stat-label">New outreach avail.</div></div>
+    </div>
+  </div>
+
+  ${sc.powerCapacityDay?renderPowerCapacityCard(d):''}
+
+  <div class="section-label">PROSPECT POOL</div>
+  <div class="card">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;">
+      <div><div class="stat-num" style="font-size:26px;">${DB.pool.ready||0}</div><div class="stat-label">Ready to outreach</div></div>
+    </div>
+    <div class="btnrow">
+      <button class="qbtn" onclick="bumpPool(5)">+5</button>
+      <button class="qbtn" onclick="bumpPool(10)">+10</button>
+      <button class="qbtn neg" onclick="bumpPool(-10)">−10 used</button>
+    </div>
+  </div>
+
+  <div class="section-label">BUSINESS NUMBERS</div>
+  <div class="card">
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${rec.prospects}</div><div class="stat-label">Prospects</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('prospects',5)">+5</button><button class="mini-btn" onclick="bump('prospects',10)">+10</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.replies}</div><div class="stat-label">Replies</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('replies',1)">+1</button><button class="mini-btn" onclick="bump('positiveReplies',1)">+POS</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.calls}</div><div class="stat-label">Calls</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('calls',1)">+1</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.clientsClosed}</div><div class="stat-label">Clients</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('clientsClosed',1)">+1</button></div></div>
+      <div class="stat"><div class="stat-num">$${rec.revenue}</div><div class="stat-label">Revenue</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="promptRevenue()">ADD</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.assignments}</div><div class="stat-label">Assignments</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('assignments',1)">+1</button></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">DAY MODE</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:6px;">UNIVERSITY MODE</div>
+    <div class="pillrow">
+      <button class="pill ${rec.examMode==='normal'?'active':''}" onclick="setExamMode('normal')">NORMAL</button>
+      <button class="pill ${rec.examMode==='prep'?'active':''}" onclick="setExamMode('prep')">EXAM PREP</button>
+      <button class="pill ${rec.examMode==='exam'?'active':''}" onclick="setExamMode('exam')">EXAM</button>
+    </div>
+    <div class="pillrow" style="margin-top:10px;">
+      <button class="pill ${rec.recoveryDay?'active':''}" onclick="toggleField('recoveryDay')">RECOVERY DAY</button>
+      ${getDayType(d)==='university'?`<button class="pill ${rec.classAttended?'active':''}" onclick="toggleField('classAttended')">CLASSES ATTENDED</button>`:''}
+    </div>
+    <div class="field" style="margin-top:10px;margin-bottom:0;">
+      <label>Client work today? (target minutes)</label>
+      <input type="number" value="${rec.clientWorkTarget}" onchange="setNum('clientWorkTarget',this.value)">
+    </div>
+  </div>
+
+  <div class="section-label">SLEEP</div>
+  <div class="card">
+    <div class="row2">
+      <div class="field" style="margin-bottom:0;"><label>Hours slept</label><input type="number" step="0.5" value="${rec.sleepHours??''}" placeholder="7.5" onchange="setNum('sleepHours',this.value)"></div>
+      <div class="field" style="margin-bottom:0;"><label>Status</label><input value="${rec.sleepHours==null?'Not logged':(rec.sleepHours>=7?'On target':'Below target')}" disabled></div>
+    </div>
+  </div>
+  `;
+}
+function renderPowerCapacityCard(d){
+  const rec=getRecord(d);
+  const businessH=(rec.businessMinutes||0)/60;
+  const studyH=rec.study/60;
+  const engH=rec.english/60;
+  const gymH=rec.gymDone?100/60:0;
+  const total=businessH+studyH+engH+gymH;
+  return `
+  <div class="section-label">POWER DAY CAPACITY (12–15h structured day)</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div class="stat-num" style="font-size:22px;">${total.toFixed(1)}h</div>
+      <div class="cmp-prev">of 12–15h target</div>
+    </div>
+    <div class="progress-track" style="margin-bottom:12px;"><div class="progress-fill" style="width:${Math.min(100,total/13*100)}%"></div></div>
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${businessH.toFixed(1)}h</div><div class="stat-label">Business</div></div>
+      <div class="stat"><div class="stat-num">${studyH.toFixed(1)}h</div><div class="stat-label">University</div></div>
+      <div class="stat"><div class="stat-num">${engH.toFixed(1)}h</div><div class="stat-label">English</div></div>
+      <div class="stat"><div class="stat-num">${gymH.toFixed(1)}h</div><div class="stat-label">Gym</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin-top:10px;">This tracks structured, logged time only — meals, prayer, breaks and transitions aren't counted, and sleep is never sacrificed to hit this number.</div>
+  </div>`;
+}
+
+function renderMissionCard(m,dateStr,isCurrent,done,isNext){
+  let inner='';
+  if(m.type==='counter'){
+    const pct=Math.min(1,m.current/Math.max(1,m.target));
+    const segs=16;
+    const filled=Math.round(pct*segs);
+    let ticks='';
+    for(let i=0;i<segs;i++){
+      ticks+=`<div class="tick ${i<filled?(m.current>=m.target?'over':'filled'):''}"></div>`;
+    }
+    inner+=`<div class="tickbar">${ticks}</div>`;
+    if(m.channelPick){
+      inner+=`<div class="chiprow">
+        <button class="chip ${UI.selectedChannel==='emails'?'active':''}" onclick="setChannel('emails')">Email</button>
+        <button class="chip ${UI.selectedChannel==='dms'?'active':''}" onclick="setChannel('dms')">DM</button>
+        <button class="chip ${UI.selectedChannel==='other'?'active':''}" onclick="setChannel('other')">Other</button>
+      </div>`;
+      inner+=`<div class="btnrow">${m.amounts.map(a=>`<button class="qbtn" onclick="bumpOutreach(${a})">+${a}</button>`).join('')}</div>`;
+      inner+=`<div class="btnrow" style="margin-top:6px;">${m.amounts.map(a=>`<button class="qbtn neg" onclick="bumpOutreach(-${a})">−${a}</button>`).join('')}</div>`;
+    }else{
+      inner+=`<div class="btnrow">${m.amounts.map(a=>`<button class="qbtn" onclick="bump('${m.field}',${a})">+${a}</button>`).join('')}</div>`;
+      inner+=`<div class="btnrow" style="margin-top:6px;">${m.amounts.map(a=>`<button class="qbtn neg" onclick="bump('${m.field}',-${a})">−${a}</button>`).join('')}</div>`;
+    }
+    if(m.adjustTarget){
+      inner+=`<div class="mission-sub">Follow-ups due today: ${m.target} &nbsp; <a style="color:var(--accent);cursor:pointer;" onclick="bump('followupsDue',5)">+5</a> &nbsp; <a style="color:var(--accent);cursor:pointer;" onclick="bump('followupsDue',-5)">−5</a></div>`;
+    }
+    if(m.sub) inner+=`<div class="mission-sub">${m.sub}</div>`;
+  }else if(m.type==='toggle'){
+    inner+=`<button class="toggle-btn ${m.current>=m.target?'on':''}" onclick="toggleField('${m.field}')">${m.current>=m.target?'✓ COMPLETE':'MARK COMPLETE'}</button>`;
+  }else if(m.type==='checklist'){
+    inner+=`<div class="checklist">${m.items.map(([k,label])=>{
+      const rec=getRecord(dateStr);
+      const on=rec[m.field][k];
+      return `<div class="check-row ${on?'strike':''}" onclick="toggleNested('${m.field}','${k}')">
+        <div class="check-box ${on?'on':''}">${on?'✓':''}</div><div class="check-label">${label}</div></div>`;
+    }).join('')}</div>`;
+  }
+
+  return `<div class="mission-card ${isCurrent?'current':''} ${done?'done':''}">
+    <div class="mission-head">
+      <div class="mission-title">${m.icon} ${m.label} ${isCurrent?'<span class="flag">CURRENT</span>':''}</div>
+      ${done?'<div class="mission-complete-badge">✓ DONE</div>':`<div class="mission-nums">${m.current}<span class="target">/${m.target}${m.unit?m.unit:''}</span></div>`}
+    </div>
+    ${inner}
+  </div>`;
+}
+
+/* ---------- FOCUS MODE ---------- */
+function renderFocus(){
+  const d=todayStr();
+  const missions=getMissions(d);
+  const curIdx=currentMissionIndex(missions);
+  const cur=missions[curIdx];
+  const next=missions[curIdx+1];
+  if(!cur){
+    return `<div class="overlay center" id="focusOverlay">
+      <div class="sheet" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:40px;">✅</div>
+        <div style="font-weight:700;font-size:18px;margin:10px 0;">ALL MISSIONS COMPLETE</div>
+        <button class="btn-secondary" onclick="closeFocus()">CLOSE</button>
+      </div></div>`;
+  }
+  return `<div class="overlay center" id="focusOverlay">
+    <div class="sheet" style="padding:28px 20px;">
+      <button class="close-x" onclick="closeFocus()">✕</button>
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:12px;letter-spacing:.1em;color:var(--text-faint);">CURRENT MISSION</div>
+        <div style="font-size:22px;font-weight:700;margin-top:6px;">${cur.icon} ${cur.label}</div>
+      </div>
+      ${renderMissionCard(cur,d,true,false,false)}
+      ${next?`<div style="text-align:center;"><div class="next-pill">NEXT → ${next.label}</div></div>`:''}
+    </div>
+  </div>`;
+}
+function openFocus(){ UI.focusOpen=true; el('modalRoot').innerHTML=renderFocus(); }
+function closeFocus(){ UI.focusOpen=false; el('modalRoot').innerHTML=''; renderView(); }
+
+/* ---------- WEEK ---------- */
+function renderWeek(){
+  const base=addDays(startOfWeek(todayStr()),UI.weekOffset*7);
+  const cur=sumRange(base,7);
+  const prevBase=addDays(base,-7);
+  const prev=sumRange(prevBase,7);
+  const label=UI.weekOffset===0?'THIS WEEK':(UI.weekOffset===-1?'LAST WEEK':`${shortDate(base)} – ${shortDate(addDays(base,6))}`);
+
+  let barsOutreach='',barsScore='';
+  for(let i=0;i<7;i++){
+    const d=addDays(base,i);
+    const rec=DB.records[d];
+    const val=rec?totalOutreach(rec):0;
+    const sc=rec?scoreForDay(d):0;
+    const maxOut=Math.max(1,...[0,1,2,3,4,5,6].map(j=>{const dd=addDays(base,j);const r=DB.records[dd];return r?totalOutreach(r):0;}));
+    barsOutreach+=`<div class="barcol"><div class="bar" style="height:${val?Math.max(4,(val/maxOut)*100):2}%;background:${d===todayStr()?'var(--accent)':'var(--surface3)'}"></div><span>${dayAbbr(d).slice(0,1).toUpperCase()}</span></div>`;
+    barsScore+=`<div class="barcol"><div class="bar" style="height:${sc||2}%;background:${sc>=70?'var(--green)':sc>0?'var(--yellow)':'var(--surface3)'}"></div><span>${dayAbbr(d).slice(0,1).toUpperCase()}</span></div>`;
+  }
+
+  // 8-week trend — weekly total output
+  let weekBars='';
+  const weekTotals=[];
+  for(let w=7;w>=0;w--){
+    const wStart=addDays(base,-w*7);
+    weekTotals.push(sumRange(wStart,7).outreach);
+  }
+  const maxWeek=Math.max(1,...weekTotals);
+  weekTotals.forEach((v,i)=>{
+    const isCur=i===7;
+    weekBars+=`<div class="barcol"><div class="bar" style="height:${v?Math.max(4,(v/maxWeek)*100):2}%;background:${isCur?'var(--accent)':'var(--surface3)'}"></div><span>${isCur?'Now':'-'+(7-i)}</span></div>`;
+  });
+
+  const rows=[
+    ['Outreach',cur.outreach,prev.outreach,''],
+    ['Follow-ups',cur.followups,prev.followups,''],
+    ['Prospects',cur.prospects,prev.prospects,''],
+    ['Replies',cur.replies,prev.replies,''],
+    ['Positive replies',cur.positiveReplies,prev.positiveReplies,''],
+    ['Calls',cur.calls,prev.calls,''],
+    ['Clients closed',cur.clients,prev.clients,''],
+    ['Revenue',cur.revenue,prev.revenue,'$'],
+    ['Study (min)',cur.study,prev.study,''],
+    ['English (min)',cur.english,prev.english,''],
+    ['Gym sessions',cur.gym,prev.gym,''],
+    ['Portfolio / build (min)',cur.portfolio,prev.portfolio,''],
+    ['Classes attended',cur.classesAttended,prev.classesAttended,''],
+    ['Assignments',cur.assignments,prev.assignments,''],
+    ['Business learning (min)',cur.businessLearning,prev.businessLearning,''],
+    ['Skincare days',cur.skincareDays,prev.skincareDays,''],
+    ['XP',cur.xp,prev.xp,''],
+    ['Avg daily score',cur.avgScore,prev.avgScore,''],
+  ];
+  const prospectTarget=DB.settings.targets.weeklyProspectTarget||300;
+  const outreachTarget=DB.settings.targets.weeklyOutreachTarget||250;
+  const isSunday=UI.weekOffset===0 && dayAbbr(todayStr())==='sun';
+  const weak=isSunday?detectWeakArea():null;
+
+  return `
+  <div class="topbar" style="padding:0 0 12px;max-width:none;">
+    <button class="iconbtn" onclick="UI.weekOffset--;renderView();">‹</button>
+    <div style="font-weight:700;font-size:14px;letter-spacing:.05em;">${label}</div>
+    <button class="iconbtn" onclick="UI.weekOffset=Math.min(0,UI.weekOffset+1);renderView();">›</button>
+  </div>
+  ${weak?`
+  <div class="card">
+    <div class="card-title">⚠️ WEEKLY REVIEW — WEAKEST AREA</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <div style="font-weight:700;font-size:14px;">${weak.label}</div>
+      <div class="stat-num" style="font-size:18px;color:${weak.pct<60?'var(--red)':'var(--yellow)'};">${weak.pct}%</div>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">${weak.reason}</div>
+    <div class="insight" style="margin-bottom:0;">${weak.action}</div>
+  </div>`:''}
+  <div class="card">
+    <div class="card-title">WEEKLY OUTREACH TARGET</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div class="stat-num" style="font-size:24px;">${cur.outreach} / ${outreachTarget}</div>
+      <div class="cmp-prev">${Math.max(0,outreachTarget-cur.outreach)} remaining</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,cur.outreach/outreachTarget*100)}%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">WEEKLY PROSPECT INVENTORY</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div class="stat-num" style="font-size:24px;">${cur.prospects} / ${prospectTarget}</div>
+      <div class="cmp-prev">${Math.max(0,prospectTarget-cur.prospects)} remaining</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,cur.prospects/prospectTarget*100)}%"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">DAILY OUTREACH</div>
+    <div class="barchart">${barsOutreach}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">DAILY SCORE</div>
+    <div class="barchart">${barsScore}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">WEEKLY OUTREACH — LAST 8 WEEKS</div>
+    <div class="barchart">${weekBars}</div>
+  </div>
+  <div class="section-label">THIS WEEK vs LAST WEEK</div>
+  <div class="card">
+    ${rows.map(([label,c,p,unit])=>`
+      <div class="cmp-row">
+        <div class="cmp-label">${label}</div>
+        <div class="cmp-vals">
+          <div><div class="cmp-cur">${unit}${c}</div><div class="cmp-prev">was ${unit}${p}</div></div>
+          ${fmtDelta(c,p,'')}
+        </div>
+      </div>`).join('')}
+  </div>
+  `;
+}
+
+/* ---------- MONTH ---------- */
+function renderMonth(){
+  const now=parseDate(todayStr());
+  const target=new Date(now.getFullYear(),now.getMonth()+UI.monthOffset,1);
+  const y=target.getFullYear(), m=target.getMonth();
+  const startStr=fmtDate(new Date(y,m,1));
+  const days=daysInMonth(y,m);
+  const cur=sumRange(startStr,days);
+  const prevTarget=new Date(y,m-1,1);
+  const prevStart=fmtDate(prevTarget);
+  const prevDays=daysInMonth(prevTarget.getFullYear(),prevTarget.getMonth());
+  const prev=sumRange(prevStart,prevDays);
+  const label=monLabel(startStr).toUpperCase()+' '+y;
+
+  const rows=[
+    ['Outreach',cur.outreach,prev.outreach],
+    ['Prospects',cur.prospects,prev.prospects],
+    ['Follow-ups',cur.followups,prev.followups],
+    ['Replies',cur.replies,prev.replies],
+    ['Positive replies',cur.positiveReplies,prev.positiveReplies],
+    ['Calls',cur.calls,prev.calls],
+    ['Clients',cur.clients,prev.clients],
+    ['Revenue ($)',cur.revenue,prev.revenue],
+    ['Study (min)',cur.study,prev.study],
+    ['English (min)',cur.english,prev.english],
+    ['Gym sessions',cur.gym,prev.gym],
+    ['Portfolio (min)',cur.portfolio,prev.portfolio],
+    ['XP',cur.xp,prev.xp],
+  ];
+
+  // mini heatmap for the month
+  const firstDow=(new Date(y,m,1).getDay()+6)%7; // Mon=0
+  let cells='';
+  for(let i=0;i<firstDow;i++) cells+=`<div class="heatcell pad"></div>`;
+  for(let dnum=1;dnum<=days;dnum++){
+    const ds=fmtDate(new Date(y,m,dnum));
+    const rec=DB.records[ds];
+    const sc=rec?scoreForDay(ds):null;
+    let bg='var(--surface3)',cls='';
+    if(sc!=null){ cls='has'; bg=sc>=80?'var(--green)':sc>=60?'var(--accent)':sc>=40?'var(--yellow)':'var(--red)'; }
+    cells+=`<div class="heatcell ${cls}" style="background:${bg};opacity:${sc!=null?0.3+Math.min(0.7,sc/100):1}" onclick="openDayDetail('${ds}')">${dnum}</div>`;
+  }
+
+  return `
+  <div class="topbar" style="padding:0 0 12px;max-width:none;">
+    <button class="iconbtn" onclick="UI.monthOffset--;renderView();">‹</button>
+    <div style="font-weight:700;font-size:14px;letter-spacing:.05em;">${label}</div>
+    <button class="iconbtn" onclick="UI.monthOffset=Math.min(0,UI.monthOffset+1);renderView();">›</button>
+  </div>
+  <div class="card">
+    <div class="card-title">MONTH AT A GLANCE</div>
+    <div class="weekday-hdr"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+    <div class="heatgrid">${cells}</div>
+  </div>
+  <div class="section-label">${label} vs ${monLabel(prevStart).toUpperCase()}</div>
+  <div class="card">
+    ${rows.map(([label,c,p])=>`
+      <div class="cmp-row">
+        <div class="cmp-label">${label}</div>
+        <div class="cmp-vals">
+          <div><div class="cmp-cur">${c}</div><div class="cmp-prev">was ${p}</div></div>
+          ${fmtDelta(c,p,'')}
+        </div>
+      </div>`).join('')}
+  </div>
+  `;
+}
+
+/* ---------- ANALYTICS ---------- */
+function renderAnalytics(){
+  const days=parseInt(UI.weekRange);
+  const start=addDays(todayStr(),-(days-1));
+  const cur=sumRange(start,days);
+  const prevStart=addDays(start,-days);
+  const prev=sumRange(prevStart,days);
+
+  let body='';
+  let graphs='';
+  if(UI.analyticsTab==='business'){
+    const funnel=[
+      ['Prospects',cur.prospects],['Outreach',cur.outreach],['Replies',cur.replies],
+      ['Positive',cur.positiveReplies],['Calls',cur.calls],['Clients',cur.clients]
+    ];
+    const maxF=Math.max(1,...funnel.map(f=>f[1]));
+    body=`
+    <div class="card">
+      <div class="card-title">ACQUISITION FUNNEL</div>
+      ${funnel.map(([l,v])=>`<div class="funnel-row"><div style="flex:1;"><div class="cmp-label">${l}</div><div class="funnel-bar" style="width:${Math.max(4,(v/maxF)*100)}%"></div></div><div class="cmp-cur">${v}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">CONVERSION RATES</div>
+      <div class="statgrid two">
+        <div class="stat"><div class="stat-num">${cur.outreach?((cur.replies/cur.outreach)*100).toFixed(1):'0.0'}%</div><div class="stat-label">Reply rate</div></div>
+        <div class="stat"><div class="stat-num">${cur.replies?((cur.positiveReplies/cur.replies)*100).toFixed(1):'0.0'}%</div><div class="stat-label">Positive rate</div></div>
+        <div class="stat"><div class="stat-num">${cur.positiveReplies?((cur.calls/cur.positiveReplies)*100).toFixed(1):'0.0'}%</div><div class="stat-label">Call booking rate</div></div>
+        <div class="stat"><div class="stat-num">${cur.calls?((cur.clients/cur.calls)*100).toFixed(1):'0.0'}%</div><div class="stat-label">Close rate</div></div>
+      </div>
+    </div>`;
+    graphs=
+      graphCard('OUTREACH TREND',buildSeries(metricOutreach,days),'#5B7CFA')+
+      graphCard('PROSPECTING TREND',buildSeries(metricProspects,days),'#3DDC84')+
+      graphCard('FOLLOW-UPS COMPLETED',buildSeries(metricFollowups,days),'#F5B942')+
+      graphCard('REPLIES OVER TIME',buildSeries(metricReplies,days),'#5B7CFA')+
+      graphCard('POSITIVE REPLIES',buildSeries(metricPositive,days),'#3DDC84')+
+      graphCard('CALLS BOOKED',buildSeries(metricCalls,days),'#F5B942')+
+      graphCard('CLIENTS ACQUIRED',buildSeries(metricClients,days),'#3DDC84')+
+      graphCard('REVENUE',buildSeries(metricRevenue,days),'#5B7CFA','$');
+  }else if(UI.analyticsTab==='personal'){
+    body=`
+    <div class="card">
+      <div class="card-title">PERSONAL DEVELOPMENT</div>
+      <div class="statgrid two">
+        <div class="stat"><div class="stat-num">${Math.round(cur.study/60*10)/10}h</div><div class="stat-label">Study</div></div>
+        <div class="stat"><div class="stat-num">${Math.round(cur.english/60*10)/10}h</div><div class="stat-label">English</div></div>
+        <div class="stat"><div class="stat-num">${cur.gym}</div><div class="stat-label">Gym sessions</div></div>
+        <div class="stat"><div class="stat-num">${cur.avgSleep??'—'}h</div><div class="stat-label">Avg sleep</div></div>
+      </div>
+    </div>`;
+    graphs=
+      graphCard('UNIVERSITY STUDY (MIN)',buildSeries(metricStudy,days),'#5B7CFA','m')+
+      graphCard('ENGLISH (MIN)',buildSeries(metricEnglish,days),'#3DDC84','m')+
+      graphCard('GYM CONSISTENCY',buildSeries(metricGym,days),'#F5B942');
+  }else{
+    const streak=computeStreak();
+    const weak=detectWeakArea();
+    body=`
+    <div class="card">
+      <div class="card-title">CONSISTENCY</div>
+      <div class="statgrid two">
+        <div class="stat"><div class="stat-num">${cur.avgScore}</div><div class="stat-label">Avg daily score</div></div>
+        <div class="stat"><div class="stat-num">🔥 ${streak}</div><div class="stat-label">Current streak</div></div>
+      </div>
+    </div>
+    ${weak?`
+    <div class="card">
+      <div class="card-title">⚠️ WEAKEST AREA (LAST 7 DAYS)</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <div style="font-weight:700;font-size:14px;">${weak.label}</div>
+        <div class="stat-num" style="font-size:18px;color:${weak.pct<60?'var(--red)':'var(--yellow)'};">${weak.pct}%</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">${weak.reason}</div>
+      <div class="insight" style="margin-bottom:0;">${weak.action}</div>
+    </div>`:''}`;
+    graphs=graphCard('DAILY PRODUCTIVITY SCORE',buildSeries(metricScore,days),'#5B7CFA');
+  }
+
+  const insights=generateInsights();
+
+  return `
+  <div class="section-label" style="margin-top:0;">RANGE</div>
+  <div class="range-tabs">
+    ${['7','30','90','365'].map(r=>`<button class="rtab ${UI.weekRange===r?'active':''}" onclick="UI.weekRange='${r}';renderView();">${r==='365'?'1 YEAR':r+' DAYS'}</button>`).join('')}
+  </div>
+  <div class="tabs">
+    <div class="tab ${UI.analyticsTab==='business'?'active':''}" onclick="UI.analyticsTab='business';renderView();">Business</div>
+    <div class="tab ${UI.analyticsTab==='personal'?'active':''}" onclick="UI.analyticsTab='personal';renderView();">Personal</div>
+    <div class="tab ${UI.analyticsTab==='consistency'?'active':''}" onclick="UI.analyticsTab='consistency';renderView();">Consistency</div>
+  </div>
+  <div class="statgrid" style="margin-bottom:14px;">
+    <div class="stat"><div class="stat-num">${cur.outreach}</div><div class="stat-label">Outreach</div></div>
+    <div class="stat"><div class="stat-num">${cur.study+cur.english}m</div><div class="stat-label">Focus time</div></div>
+    <div class="stat"><div class="stat-num">$${cur.revenue}</div><div class="stat-label">Revenue</div></div>
+  </div>
+  ${body}
+  <div class="section-label">GRAPHS</div>
+  ${graphs}
+  <div class="section-label">LEVEL</div>
+  ${renderLevelCard()}
+  <div class="section-label">ACHIEVEMENTS</div>
+  <div class="card">
+    <div class="ach-grid">
+      ${achievementDefs().map(a=>`<div class="ach-item ${a.on?'on':''}"><div class="ach-emoji">${a.emoji}</div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div>`).join('')}
+    </div>
+  </div>
+  <div class="section-label">INSIGHTS</div>
+  ${insights.map(i=>`<div class="insight ${i.cls}">${i.text}</div>`).join('')}
+  `;
+}
+function renderLevelCard(){
+  const xp=lifetimeXP();
+  const li=levelInfo(xp);
+  return `<div class="card">
+    <div class="level-badge">
+      <div class="level-num">LV ${li.level}</div>
+      <div style="flex:1;">
+        <div class="xpbar-track"><div class="xpbar-fill" style="width:${li.pct*100}%"></div></div>
+        <div style="font-size:11px;color:var(--text-faint);margin-top:5px;font-family:var(--font-mono);">${xp} / ${li.nextThresh} XP</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- CALENDAR ---------- */
+function renderCalendar(){
+  const now=parseDate(todayStr());
+  const target=new Date(now.getFullYear(),now.getMonth()+UI.calMonthOffset,1);
+  const y=target.getFullYear(), m=target.getMonth();
+  const days=daysInMonth(y,m);
+  const firstDow=(new Date(y,m,1).getDay()+6)%7;
+  let cells='';
+  for(let i=0;i<firstDow;i++) cells+=`<div class="heatcell pad"></div>`;
+  for(let dnum=1;dnum<=days;dnum++){
+    const ds=fmtDate(new Date(y,m,dnum));
+    const rec=DB.records[ds];
+    const sc=rec?scoreForDay(ds):null;
+    let bg='var(--surface3)',cls='';
+    if(sc!=null){ cls='has'; bg=sc>=80?'var(--green)':sc>=60?'var(--accent)':sc>=40?'var(--yellow)':'var(--red)'; }
+    const isToday=ds===todayStr();
+    cells+=`<div class="heatcell ${cls}" style="background:${bg};opacity:${sc!=null?0.3+Math.min(0.7,sc/100):1};${isToday?'box-shadow:0 0 0 2px var(--accent);':''}" onclick="openDayDetail('${ds}')">${dnum}</div>`;
+  }
+  return `
+  <div class="topbar" style="padding:0 0 12px;max-width:none;">
+    <button class="iconbtn" onclick="UI.calMonthOffset--;renderView();">‹</button>
+    <div style="font-weight:700;font-size:14px;letter-spacing:.05em;">${monLabel(fmtDate(target)).toUpperCase()} ${y}</div>
+    <button class="iconbtn" onclick="UI.calMonthOffset++;renderView();">›</button>
+  </div>
+  <div class="card">
+    <div class="weekday-hdr"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+    <div class="heatgrid">${cells}</div>
+  </div>
+  <div class="section-label">TIP</div>
+  <div class="insight">Tap any day to view or backfill its numbers.</div>
+  `;
+}
+function openDayDetail(ds){
+  const rec=getRecord(ds);
+  const sc=scoreForDay(ds);
+  el('modalRoot').innerHTML=`
+  <div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">${humanDate(ds)}</div>
+      <div class="statgrid" style="margin-bottom:14px;">
+        <div class="stat"><div class="stat-num">${sc}</div><div class="stat-label">Score</div></div>
+        <div class="stat"><div class="stat-num">${xpForDay(ds)}</div><div class="stat-label">XP</div></div>
+        <div class="stat"><div class="stat-num">${totalOutreach(rec)}</div><div class="stat-label">Outreach</div></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Outreach (emails)</label><input type="number" value="${rec.outreach.emails}" onchange="setDayField('${ds}','outreach.emails',this.value)"></div>
+        <div class="field"><label>Outreach (DMs)</label><input type="number" value="${rec.outreach.dms}" onchange="setDayField('${ds}','outreach.dms',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Follow-ups completed</label><input type="number" value="${rec.followupsCompleted}" onchange="setDayField('${ds}','followupsCompleted',this.value)"></div>
+        <div class="field"><label>Follow-ups due</label><input type="number" value="${rec.followupsDue}" onchange="setDayField('${ds}','followupsDue',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Study (min)</label><input type="number" value="${rec.study}" onchange="setDayField('${ds}','study',this.value)"></div>
+        <div class="field"><label>English (min)</label><input type="number" value="${rec.english}" onchange="setDayField('${ds}','english',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Replies</label><input type="number" value="${rec.replies}" onchange="setDayField('${ds}','replies',this.value)"></div>
+        <div class="field"><label>Revenue ($)</label><input type="number" value="${rec.revenue}" onchange="setDayField('${ds}','revenue',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Prospects</label><input type="number" value="${rec.prospects}" onchange="setDayField('${ds}','prospects',this.value)"></div>
+        <div class="field"><label>Business deep work (min)</label><input type="number" value="${rec.businessMinutes||0}" onchange="setDayField('${ds}','businessMinutes',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Business learning (min)</label><input type="number" value="${rec.businessLearning}" onchange="setDayField('${ds}','businessLearning',this.value)"></div>
+        <div class="field"><label>Sleep (hours)</label><input type="number" step="0.5" value="${rec.sleepHours??''}" onchange="setDayField('${ds}','sleepHours',this.value)"></div>
+      </div>
+      <button class="btn-secondary" onclick="closeModal()">DONE</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- GOALS ---------- */
+function renderGoals(){
+  const total=DB.goals.milestones.length;
+  const doneCount=DB.goals.milestones.filter(m=>m.done).length;
+  const goal=DB.settings.targets.revenueGoal||2000;
+  const monthStart=startOfMonth(todayStr());
+  const currentMRR=sumRange(monthStart,daysInMonth(parseDate(monthStart).getFullYear(),parseDate(monthStart).getMonth())).revenue;
+  const prices=[500,750,1000,1500];
+  return `
+  <div class="card">
+    <div class="card-title">4-MONTH BUSINESS GOAL</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <div class="stat-num" style="font-size:26px;">$${currentMRR}</div>
+      <div class="cmp-prev">/ $${goal} MRR target</div>
+    </div>
+    <div class="progress-track" style="margin-bottom:14px;"><div class="progress-fill" style="width:${Math.min(100,currentMRR/goal*100)}%"></div></div>
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;">Clients needed at each price point:</div>
+    <div class="statgrid two">
+      ${prices.map(p=>`<div class="stat"><div class="stat-num">${Math.ceil(goal/p)}</div><div class="stat-label">at $${p}/mo</div></div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">PRIMARY GOAL</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px;">Build Email-Marketing Agency</div>
+    <div style="font-size:12px;color:var(--text-faint);margin-bottom:8px;">${doneCount} / ${total} milestones</div>
+    <div class="progress-track"><div class="progress-fill" style="width:${doneCount/total*100}%"></div></div>
+  </div>
+  <div class="card">
+    ${DB.goals.milestones.map((m,i)=>`
+      <div class="milestone-row ${m.done?'done':''}" onclick="toggleMilestone('${m.id}')">
+        <div class="milestone-num">${i+1}</div>
+        <div class="check-box ${m.done?'on':''}">${m.done?'✓':''}</div>
+        <div class="milestone-label" style="flex:1;font-size:13px;">${m.label}</div>
+      </div>`).join('')}
+  </div>
+  <div class="section-label">CUSTOM GOALS</div>
+  ${DB.goals.custom.length===0?`<div class="empty"><div class="big">🎯</div>No custom goals yet.</div>`:
+    DB.goals.custom.map(g=>`
+    <div class="goal-item ${g.current>=g.target?'done':''}">
+      <div class="goal-top"><div class="goal-name">${g.name}</div><div class="cmp-cur">${g.current}/${g.target}</div></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,g.current/g.target*100)}%"></div></div>
+      <div class="btnrow" style="margin-top:10px;">
+        <button class="qbtn" onclick="bumpGoal('${g.id}',1)">+1</button>
+        <button class="qbtn" onclick="bumpGoal('${g.id}',5)">+5</button>
+        <button class="qbtn neg" onclick="removeGoal('${g.id}')">DELETE</button>
+      </div>
+    </div>`).join('')}
+  <button class="btn-primary" onclick="openAddGoal()">+ ADD CUSTOM GOAL</button>
+
+  <div class="section-label">4-YEAR ROADMAP</div>
+  <div class="card">
+    ${[['YEAR 1','Become Dangerous','Skills, portfolio, first clients, proof, sales'],
+       ['YEAR 2','Become Valuable','Better clients, results, higher pricing, retainers'],
+       ['YEAR 3','Become Scalable','Systems, contractors, processes, delegation'],
+       ['YEAR 4','Become an Owner','Agency, team, systems, scale']].map(([y,t,d])=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.08em;">${y}</div>
+        <div style="font-weight:700;font-size:13px;margin:2px 0;">${t}</div>
+        <div style="font-size:12px;color:var(--text-faint);">${d}</div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-label">LIFETIME OUTPUT</div>
+  ${renderLifetimeCard()}
+  `;
+}
+function renderLifetimeCard(){
+  const dates=Object.keys(DB.records);
+  const t={outreach:0,study:0,english:0,gym:0,clients:0,revenue:0,prospects:0,calls:0};
+  dates.forEach(d=>{ const r=DB.records[d]; t.outreach+=totalOutreach(r); t.study+=r.study; t.english+=r.english; if(r.gymDone)t.gym++; t.clients+=r.clientsClosed; t.revenue+=r.revenue; t.prospects+=r.prospects; t.calls+=r.calls; });
+  return `<div class="card"><div class="statgrid two">
+    <div class="stat"><div class="stat-num">${t.outreach}</div><div class="stat-label">Total outreach</div></div>
+    <div class="stat"><div class="stat-num">${Math.round(t.study/60)}h</div><div class="stat-label">Study hours</div></div>
+    <div class="stat"><div class="stat-num">${Math.round(t.english/60)}h</div><div class="stat-label">English hours</div></div>
+    <div class="stat"><div class="stat-num">${t.gym}</div><div class="stat-label">Gym sessions</div></div>
+    <div class="stat"><div class="stat-num">${t.clients}</div><div class="stat-label">Clients</div></div>
+    <div class="stat"><div class="stat-num">$${t.revenue}</div><div class="stat-label">Revenue</div></div>
+  </div></div>`;
+}
+function openAddGoal(){
+  el('modalRoot').innerHTML=`
+  <div class="overlay center" onclick="if(event.target===this)closeModal()">
+    <div class="sheet">
+      <div class="sheet-title">Add custom goal</div>
+      <div class="field"><label>Name</label><input id="ng_name" placeholder="e.g. 5 client testimonials"></div>
+      <div class="field"><label>Target number</label><input id="ng_target" type="number" value="10"></div>
+      <button class="btn-primary" onclick="addGoal()">ADD GOAL</button>
+    </div>
+  </div>`;
+}
+function addGoal(){
+  const name=el('ng_name').value.trim()||'New goal';
+  const target=parseFloat(el('ng_target').value)||1;
+  DB.goals.custom.push({id:'g'+Date.now(),name,target,current:0});
+  saveDB(); closeModal(); renderView();
+}
+function bumpGoal(id,amt){
+  const g=DB.goals.custom.find(x=>x.id===id); if(!g)return;
+  g.current=Math.max(0,g.current+amt); saveDB(); renderView();
+}
+function removeGoal(id){
+  DB.goals.custom=DB.goals.custom.filter(x=>x.id!==id); saveDB(); renderView();
+}
+function toggleMilestone(id){
+  const m=DB.goals.milestones.find(x=>x.id===id); if(!m)return;
+  m.done=!m.done; saveDB(); renderView();
+}
+
+/* ---------- SETTINGS ---------- */
+function renderSettings(){
+  const tabs=[['schedule','Schedule'],['targets','Targets'],['xp','XP'],['data','Data'],['appearance','Appearance']];
+  let body='';
+  if(UI.settingsTab==='schedule') body=renderScheduleSettings();
+  else if(UI.settingsTab==='targets') body=renderTargetSettings();
+  else if(UI.settingsTab==='xp') body=renderXPSettings();
+  else if(UI.settingsTab==='data') body=renderDataSettings();
+  else body=renderAppearanceSettings();
+  return `
+  <div class="tabs" style="flex-wrap:wrap;">
+    ${tabs.map(([k,l])=>`<div class="tab" style="flex:1 1 30%;${UI.settingsTab===k?'':''}" onclick="UI.settingsTab='${k}';renderView();"><span style="${UI.settingsTab===k?'color:var(--text);':''}">${l}</span></div>`).join('')}
+  </div>
+  ${body}
+  `;
+}
+function renderScheduleSettings(){
+  const days=[['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
+  return `
+  <div class="settings-group">
+    <div class="settings-group-head">Wake / Sleep</div>
+    <div class="settings-group-body">
+      <div class="row2">
+        <div class="field"><label>Wake time</label><input type="time" value="${DB.settings.wakeTime}" onchange="setSetting('wakeTime',this.value)"></div>
+        <div class="field"><label>Sleep time</label><input type="time" value="${DB.settings.sleepTime}" onchange="setSetting('sleepTime',this.value)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Weekly Schedule</div>
+    <div class="settings-group-body">
+      ${days.map(([k,label])=>renderDayEditor(k,label)).join('')}
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Gym Days</div>
+    <div class="settings-group-body">
+      <div class="pillrow">
+        ${days.map(([k,label])=>`<button class="pill ${DB.settings.targets.gymDays.includes(k)?'active':''}" onclick="toggleGymDay('${k}')">${label.slice(0,3)}</button>`).join('')}
+      </div>
+    </div>
+  </div>
+  `;
+}
+function renderDayEditor(k,label){
+  const sc=DB.settings.weekSchedule[k];
+  const typeOptions=[['class','Class'],['break','Break'],['business','Business'],['study','Study'],['english','English'],['gym','Gym'],['meal','Meal'],['routine','Routine'],['recovery','Recovery'],['sleep','Sleep']];
+  return `<div class="daycard">
+    <div class="daycard-head"><b>${label}</b>
+      <div class="pillrow" style="margin:0;">
+        <button class="pill ${sc.isUniversityDay?'active':''}" onclick="toggleScheduleFlag('${k}','isUniversityDay')">Uni day</button>
+        <button class="pill ${sc.heavy?'active':''}" onclick="toggleScheduleFlag('${k}','heavy')">Heavy</button>
+        <button class="pill ${sc.isPowerDay?'active':''}" onclick="toggleScheduleFlag('${k}','isPowerDay')">🔥 Power</button>
+        <button class="pill ${sc.powerCapacityDay?'active':''}" onclick="toggleScheduleFlag('${k}','powerCapacityDay')">12–15h day</button>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px;"><label>Home time</label><input type="time" value="${sc.homeTime||''}" onchange="setSchedule('${k}','homeTime',this.value)"></div>
+    <div style="font-size:11px;color:var(--text-faint);margin:6px 0 4px;">Full-day timeline — every block is editable</div>
+    ${sc.blocks.map((b,i)=>`
+      <div class="break-row">
+        <input type="time" value="${b.start}" onchange="setBlockField('${k}',${i},'start',this.value)" style="flex:0 0 78px;">
+        <input type="time" value="${b.end}" onchange="setBlockField('${k}',${i},'end',this.value)" style="flex:0 0 78px;">
+        <input value="${b.label}" onchange="setBlockField('${k}',${i},'label',this.value)" style="flex:1;min-width:80px;">
+        <select onchange="setBlockField('${k}',${i},'type',this.value)" style="flex:0 0 82px;">
+          ${typeOptions.map(([v,l])=>`<option value="${v}" ${b.type===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+        ${b.type==='break'?`<button class="mini-btn" style="flex:0 0 30px;background:${b.offline?'var(--accent-dim)':'var(--surface3)'};" onclick="toggleBlockOffline('${k}',${i})" title="Offline block">📴</button>`:''}
+        <button class="mini-btn" style="flex:0 0 30px;" onclick="removeBlock('${k}',${i})">✕</button>
+      </div>`).join('')}
+    <div class="chiprow" style="margin-top:8px;">
+      ${typeOptions.map(([v,l])=>`<button class="chip" onclick="addBlock('${k}','${v}')">+ ${l}</button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin:12px 0 6px;">Targets</div>
+    <div class="row2">
+      <div class="field" style="margin-bottom:6px;"><label>Study target (min)</label><input type="number" value="${sc.studyTarget}" onchange="setScheduleNum('${k}','studyTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>English target (min)</label><input type="number" value="${sc.englishTarget}" onchange="setScheduleNum('${k}','englishTarget',this.value)"></div>
+    </div>
+    <div class="row2">
+      <div class="field" style="margin-bottom:6px;"><label>Business deep work target (min)</label><input type="number" value="${sc.businessDeepWorkTarget||0}" onchange="setScheduleNum('${k}','businessDeepWorkTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Build target (min)</label><input type="number" value="${sc.buildTarget}" onchange="setScheduleNum('${k}','buildTarget',this.value)"></div>
+    </div>
+    <div class="row2">
+      <div class="field" style="margin-bottom:6px;"><label>Prospecting target</label><input type="number" value="${sc.prospectingTarget}" onchange="setScheduleNum('${k}','prospectingTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Sales capacity</label><input type="number" value="${sc.salesCapacity}" onchange="setScheduleNum('${k}','salesCapacity',this.value)"></div>
+    </div>
+  </div>`;
+}
+function renderTargetSettings(){
+  const t=DB.settings.targets;
+  return `
+  <div class="insight">Per-day study, English, build, prospecting and sales-capacity targets now live in the <b>Schedule</b> tab so each day of the new timetable can differ. This tab covers the targets that apply across the whole week.</div>
+  <div class="settings-group">
+    <div class="settings-group-head">Weekly Business Targets</div>
+    <div class="settings-group-body">
+      <div class="row2">
+        <div class="field"><label>Weekly outreach target</label><input type="number" value="${t.weeklyOutreachTarget}" onchange="setSetting('targets.weeklyOutreachTarget',this.value,true)"></div>
+        <div class="field"><label>Weekly prospect target (Thu+Sat+Sun)</label><input type="number" value="${t.weeklyProspectTarget}" onchange="setSetting('targets.weeklyProspectTarget',this.value,true)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Follow-up ratio (of prior outreach)</label><input type="number" step="0.05" value="${t.followupRatio}" onchange="setSetting('targets.followupRatio',this.value)"></div>
+        <div class="field"><label>Revenue goal ($ MRR)</label><input type="number" value="${t.revenueGoal}" onchange="setSetting('targets.revenueGoal',this.value,true)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Business Learning</div>
+    <div class="settings-group-body">
+      <div class="pillrow">
+        <button class="pill ${t.businessLearningEnabled?'active':''}" onclick="setSetting('targets.businessLearningEnabled',${!t.businessLearningEnabled})">Enabled</button>
+      </div>
+      <div class="field" style="margin-bottom:0;"><label>Daily max (min)</label><input type="number" value="${t.businessLearning}" onchange="setSetting('targets.businessLearning',this.value,true)"></div>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Score Weights (%)</div>
+    <div class="settings-group-body">
+      ${Object.entries(DB.settings.score).map(([k,v])=>`
+        <div class="xrow"><label>${k[0].toUpperCase()+k.slice(1)}</label><input type="number" value="${v}" onchange="setSetting('score.${k}',this.value,true)"></div>`).join('')}
+    </div>
+  </div>
+  `;
+}
+function renderXPSettings(){
+  const x=DB.settings.xp;
+  const labels={outreach25:'Outreach ≥25',outreach50:'Outreach ≥50',outreach75:'Outreach ≥75',outreach100:'Outreach ≥100',
+    followup:'Per follow-up',positiveReply:'Positive reply',call:'Sales call',client:'Client closed',
+    study30:'Study ≥30min',study60:'Study ≥60min',english30:'English ≥30min',gym:'Gym session',
+    morningRoutine:'Morning routine',nightRoutine:'Night routine',sleepTarget:'Sleep target met',classAttended:'Classes attended'};
+  return `<div class="settings-group"><div class="settings-group-head">XP Values</div><div class="settings-group-body">
+    ${Object.entries(x).map(([k,v])=>`<div class="xrow"><label>${labels[k]||k}</label><input type="number" value="${v}" onchange="setSetting('xp.${k}',this.value,true)"></div>`).join('')}
+  </div></div>`;
+}
+function renderDataSettings(){
+  return `
+  <div class="settings-group">
+    <div class="settings-group-head">Export</div>
+    <div class="settings-group-body">
+      <button class="btn-secondary" onclick="exportJSON()">EXPORT AS JSON</button>
+      <button class="btn-secondary" onclick="exportCSV()">EXPORT AS CSV</button>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Import</div>
+    <div class="settings-group-body">
+      <input type="file" id="importFile" accept=".json" style="width:100%;">
+      <button class="btn-secondary" onclick="importJSON()">IMPORT JSON BACKUP</button>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">Danger Zone</div>
+    <div class="settings-group-body">
+      <button class="btn-secondary btn-danger" onclick="confirmReset()">RESET ALL DATA</button>
+    </div>
+  </div>
+  `;
+}
+function renderAppearanceSettings(){
+  return `<div class="settings-group"><div class="settings-group-head">Theme</div><div class="settings-group-body">
+    <div class="pillrow">
+      <button class="pill ${DB.settings.theme==='dark'?'active':''}" onclick="setTheme('dark')">Dark</button>
+      <button class="pill ${DB.settings.theme==='light'?'active':''}" onclick="setTheme('light')">Light</button>
+      <button class="pill ${DB.settings.theme==='system'?'active':''}" onclick="setTheme('system')">System</button>
+    </div>
+  </div></div>
+  <div class="settings-group"><div class="settings-group-head">🤖 Execution Mode</div><div class="settings-group-body">
+    <div class="pillrow">
+      <button class="pill ${DB.settings.executionMode?'active':''}" onclick="toggleExecutionMode()">${DB.settings.executionMode?'ON — Today shows only NOW/NEXT/PROGRESS':'OFF — Today shows everything'}</button>
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin-top:6px;">This is also the toggle button at the top of the Today page.</div>
+  </div></div>
+  <div class="insight">Add this to your Home Screen from Safari's Share menu for an app-like feel. It must stay opened via Claude for your data to keep saving.</div>`;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function bump(field,amount){
+  const d=todayStr(); const rec=getRecord(d);
+  const before=getPath(rec,field);
+  setPath(rec,field,Math.max(0,before+amount));
+  if(field==='prospects' && amount>0){ DB.pool.ready=Math.max(0,(DB.pool.ready||0)+amount); }
+  saveDB();
+  showToast(`${field.split('.').pop()} ${amount>0?'+':''}${amount}`,()=>{ setPath(rec,field,before); if(field==='prospects'&&amount>0)DB.pool.ready=Math.max(0,(DB.pool.ready||0)-amount); saveDB(); renderView(); if(UI.focusOpen)el('modalRoot').innerHTML=renderFocus(); });
+  renderView();
+  if(UI.focusOpen)el('modalRoot').innerHTML=renderFocus();
+}
+function bumpPool(amount){
+  DB.pool.ready=Math.max(0,(DB.pool.ready||0)+amount);
+  saveDB(); renderView();
+}
+function bumpOutreach(amount){
+  const field='outreach.'+UI.selectedChannel;
+  bump(field,amount);
+}
+function setChannel(c){ UI.selectedChannel=c; renderView(); if(UI.focusOpen)el('modalRoot').innerHTML=renderFocus(); }
+function toggleField(field){
+  const d=todayStr(); const rec=getRecord(d);
+  setPath(rec,field,!getPath(rec,field));
+  saveDB(); renderView(); if(UI.focusOpen)el('modalRoot').innerHTML=renderFocus();
+}
+function setExamMode(tier){
+  const rec=getRecord(todayStr());
+  rec.examMode=tier;
+  saveDB(); renderView();
+}
+function toggleNested(group,key){
+  const d=todayStr(); const rec=getRecord(d);
+  rec[group][key]=!rec[group][key];
+  saveDB(); renderView(); if(UI.focusOpen)el('modalRoot').innerHTML=renderFocus();
+}
+function setNum(field,val){
+  const d=todayStr(); const rec=getRecord(d);
+  const num=val===''?null:parseFloat(val);
+  setPath(rec,field,isNaN(num)?null:num);
+  saveDB(); renderView();
+}
+function promptRevenue(){
+  el('modalRoot').innerHTML=`<div class="overlay center" onclick="if(event.target===this)closeModal()">
+    <div class="sheet"><div class="sheet-title">Add revenue</div>
+      <div class="field"><input id="rev_amt" type="number" placeholder="Amount ($)" autofocus></div>
+      <button class="btn-primary" onclick="addRevenue()">ADD</button>
+    </div></div>`;
+}
+function addRevenue(){
+  const amt=parseFloat(el('rev_amt').value)||0;
+  const rec=getRecord(todayStr());
+  rec.revenue+=amt; saveDB(); closeModal(); renderView();
+}
+function closeModal(){ el('modalRoot').innerHTML=''; }
+
+function setDayField(ds,field,val){
+  const rec=getRecord(ds);
+  const num=parseFloat(val); setPath(rec,field,isNaN(num)?0:num);
+  saveDB(); renderView();
+}
+
+function setSetting(path,val,isNum){
+  let v=val;
+  if(isNum){ v=parseFloat(val); if(isNaN(v))v=0; }
+  setPath(DB.settings,path,v);
+  saveDB(); renderView();
+}
+function setSchedule(day,field,val){
+  DB.settings.weekSchedule[day][field]=val;
+  saveDB(); renderView();
+}
+function toggleScheduleFlag(day,field){
+  const sc=DB.settings.weekSchedule[day];
+  sc[field]=!sc[field];
+  saveDB(); renderView();
+}
+function setScheduleNum(day,field,val){
+  const sc=DB.settings.weekSchedule[day];
+  const n=parseFloat(val); sc[field]=isNaN(n)?0:n;
+  saveDB(); renderView();
+}
+function addBlock(day,type){
+  const labels={class:'Class',break:'Break',business:'Business deep work',study:'University study',english:'English — 30 minutes',gym:'Gym block — 20 travel + 60 workout + 20 travel',meal:'Meal',routine:'Routine',recovery:'Recovery',sleep:'Sleep target'};
+  const start='09:00', end=type==='sleep'?'09:00':'09:50';
+  DB.settings.weekSchedule[day].blocks.push({start,end,type,label:labels[type]||type,offline:type==='break'});
+  saveDB(); renderView();
+}
+function removeBlock(day,i){
+  DB.settings.weekSchedule[day].blocks.splice(i,1);
+  saveDB(); renderView();
+}
+function setBlockField(day,i,field,val){
+  DB.settings.weekSchedule[day].blocks[i][field]=val;
+  saveDB(); renderView();
+}
+function toggleBlockOffline(day,i){
+  const b=DB.settings.weekSchedule[day].blocks[i];
+  b.offline=!b.offline;
+  saveDB(); renderView();
+}
+function toggleGymDay(day){
+  const arr=DB.settings.targets.gymDays;
+  const idx=arr.indexOf(day);
+  if(idx>=0)arr.splice(idx,1); else arr.push(day);
+  saveDB(); renderView();
+}
+function setTheme(t){
+  DB.settings.theme=t;
+  applyTheme();
+  saveDB(); renderView();
+}
+function applyTheme(){
+  let t=DB.settings.theme;
+  if(t==='system'){ t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'; }
+  document.documentElement.setAttribute('data-theme',t);
+}
+
+/* ---------- day complete ---------- */
+function openDayComplete(){
+  const d=todayStr(); const rec=getRecord(d);
+  rec.dayComplete=true; saveDB();
+  const score=scoreForDay(d); const xp=xpForDay(d); const streak=computeStreak();
+  DB.meta.bestStreak=Math.max(DB.meta.bestStreak||0,streak); saveDB();
+  el('modalRoot').innerHTML=`<div class="overlay center" onclick="if(event.target===this)closeModal()">
+    <div class="sheet" style="text-align:center;padding:30px 20px;">
+      <div style="font-size:12px;color:var(--text-faint);letter-spacing:.1em;">DAY COMPLETE</div>
+      <div style="font-size:44px;font-weight:700;font-family:var(--font-mono);margin:10px 0;color:var(--accent);">${score}%</div>
+      <div style="display:flex;justify-content:center;gap:20px;margin:14px 0;">
+        <div><div class="stat-num">${xp}</div><div class="stat-label">XP</div></div>
+        <div><div class="stat-num">${totalOutreach(rec)}</div><div class="stat-label">Outreach</div></div>
+        <div><div class="stat-num">🔥${streak}</div><div class="stat-label">Streak</div></div>
+      </div>
+      <button class="btn-primary" onclick="closeModal()">DONE</button>
+    </div></div>`;
+}
+
+/* ---------- quick sheet ---------- */
+function openQuickSheet(){
+  el('modalRoot').innerHTML=`
+  <div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Quick log</div>
+      <div class="section-label" style="margin-top:0;">Outreach</div>
+      <div class="btnrow">${[5,10,25].map(a=>`<button class="qbtn" onclick="bumpOutreach(${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Follow-ups</div>
+      <div class="btnrow">${[5,10].map(a=>`<button class="qbtn" onclick="bump('followupsCompleted',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Prospects</div>
+      <div class="btnrow">${[5,10,25].map(a=>`<button class="qbtn" onclick="bump('prospects',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Business deep work</div>
+      <div class="btnrow">${[30,60,90].map(a=>`<button class="qbtn" onclick="bump('businessMinutes',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Study</div>
+      <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('study',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">English</div>
+      <div class="btnrow">${[15,30].map(a=>`<button class="qbtn" onclick="bump('english',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Client work</div>
+      <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('clientWork',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Build (portfolio/client)</div>
+      <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('portfolio',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Business learning</div>
+      <div class="btnrow">${[10,20,30].map(a=>`<button class="qbtn" onclick="bump('businessLearning',${a})">+${a}</button>`).join('')}</div>
+      <button class="btn-secondary" onclick="closeModal()">CLOSE</button>
+    </div>
+  </div>`;
+}
+function openMoreSheet(){
+  el('modalRoot').innerHTML=`
+  <div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="link-row" onclick="setView('calendar');closeModal();"><div class="l">Calendar</div><div class="r">›</div></div>
+      <div class="link-row" onclick="setView('goals');closeModal();"><div class="l">Goals</div><div class="r">›</div></div>
+      <div class="link-row" onclick="setView('settings');closeModal();"><div class="l">Settings</div><div class="r">›</div></div>
+      <div class="link-row" onclick="openFocus();closeModal();"><div class="l">Focus Mode</div><div class="r">›</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function showToast(text,undoFn){
+  clearTimeout(toastTimer);
+  const t=el('toast');
+  t.innerHTML=`<span>${text}</span><button onclick="undoAction()">UNDO</button>`;
+  t.style.display='flex';
+  undoStack=undoFn;
+  toastTimer=setTimeout(()=>{ t.style.display='none'; undoStack=null; },4000);
+}
+function undoAction(){
+  if(undoStack)undoStack();
+  el('toast').style.display='none';
+  undoStack=null;
+}
+
+/* ---------- export / import ---------- */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='execution-os-backup-'+todayStr()+'.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function exportCSV(){
+  const dates=Object.keys(DB.records).sort();
+  const headers=['date','outreach','followups_completed','followups_due','prospects','replies','positive_replies','calls','clients','revenue','study_min','english_min','gym','portfolio_min','business_deep_work_min','business_learning_min','assignments','exam_mode','score','xp'];
+  let rows=[headers.join(',')];
+  dates.forEach(d=>{
+    const r=DB.records[d];
+    rows.push([d,totalOutreach(r),r.followupsCompleted,r.followupsDue,r.prospects,r.replies,r.positiveReplies,r.calls,r.clientsClosed,r.revenue,r.study,r.english,r.gymDone?1:0,r.portfolio,r.businessMinutes||0,r.businessLearning||0,r.assignments||0,r.examMode||'normal',scoreForDay(d),xpForDay(d)].join(','));
+  });
+  const blob=new Blob([rows.join(String.fromCharCode(10))],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='execution-os-'+todayStr()+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importJSON(){
+  const fileInput=el('importFile');
+  if(!fileInput.files.length){ alert('Choose a JSON backup file first.'); return; }
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.settings||!data.records){ alert('This file does not look like a valid backup.'); return; }
+      DB=data;
+      DB.settings=Object.assign(defaultSettings(),DB.settings||{});
+      if(!DB.goals)DB.goals=defaultGoals();
+      if(!DB.meta)DB.meta={bestStreak:0};
+      if(!DB.pool)DB.pool={ready:0};
+      if(!DB.schemaVersion)DB.schemaVersion=4;
+      STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
+      const ok=await persistNow();
+      applyTheme();
+      render();
+      alert(ok?'Backup imported.':'Backup loaded, but saving to local storage failed — export a copy now so you don\u2019t lose it.');
+    }catch(err){ alert('Could not read that file.'); }
+  };
+  reader.readAsText(fileInput.files[0]);
+}
+function confirmReset(){
+  el('modalRoot').innerHTML=`<div class="overlay center" onclick="if(event.target===this)closeModal()">
+    <div class="sheet" style="text-align:center;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px;">Reset all data?</div>
+      <div style="font-size:12px;color:var(--text-faint);margin-bottom:16px;">This permanently deletes every record, streak, and goal. Export a backup first if you're not sure.</div>
+      <button class="btn-primary" style="background:var(--red);" onclick="doReset()">DELETE EVERYTHING</button>
+      <button class="btn-secondary" onclick="closeModal()">CANCEL</button>
+    </div></div>`;
+}
+async function doReset(){
+  STORAGE_UNAVAILABLE=false;
+  try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+  await persistNow();
+  closeModal(); applyTheme(); render();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  await loadDB();
+  applyTheme();
+  render();
+  setInterval(()=>{ if(UI.view==='today' && !UI.focusOpen) renderView(); }, 30000);
+}
+init();
+
+// Register the service worker for offline/PWA support. This is separate
+// from app data storage (IndexedDB above) — it only caches the static
+// files so the app can load with no network connection.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>{
+      console.warn('Service worker registration failed (app still works online):',err);
+    });
+  });
+}
+</script>
+</body>
+</html>
