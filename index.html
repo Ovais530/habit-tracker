@@ -395,7 +395,7 @@ function powerDayBlocks(opts){
 }
 function defaultSettings(){
   return {
-    schemaVersion:5,
+    schemaVersion:6,
     wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
     weekSchedule:{
       mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
@@ -577,7 +577,7 @@ async function loadDB(){
     if(!DB.goals)DB.goals=defaultGoals();
     if(!DB.meta)DB.meta={bestStreak:0};
     if(!DB.pool)DB.pool={ready:0};
-    if(!DB.schemaVersion || DB.schemaVersion<5){
+    if(!DB.schemaVersion || DB.schemaVersion<6){
       // one-time migration: adopt the new final university timetable,
       // updated weekly business targets, and the new point-based scoring
       // rubrics. Existing records, goals, streaks and XP are left
@@ -594,7 +594,7 @@ async function loadDB(){
         if(r.businessMinutes==null) r.businessMinutes=0;
         if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      DB.schemaVersion=5;
+      DB.schemaVersion=6;
       saveDB();
     }
   }else if(readFailed){
@@ -604,12 +604,12 @@ async function loadDB(){
     // any real data already on this device the moment storage recovers.
     // Run this session entirely in memory instead and tell the user clearly.
     console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
     STORAGE_UNAVAILABLE=true;
     showStorageErrorBanner();
   }else{
     // Genuinely first launch on this device: no error, just nothing stored yet.
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
     await persistNow();
   }
 }
@@ -825,19 +825,22 @@ function scoreBreakdown(dateStr){
   const w=isPower?DB.settings.score.power:DB.settings.score.normal;
 
   const ot=getOutreachTargets(dateStr);
-  const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):1;
-  const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):1;
-  const prospectingRatio=sc.prospectingTarget>0?Math.min(1,rec.prospects/sc.prospectingTarget):1;
-  let businessRatio;
+  // IMPORTANT: 0 completed work must mean 0 points.
+  // A category only earns points when its task/target is actually completed.
+  // Do NOT treat zero-target / not-applicable categories as 100% complete.
+  const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):0;
+  const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):0;
+  const prospectingRatio=sc.prospectingTarget>0?Math.min(1,rec.prospects/sc.prospectingTarget):0;
+  let businessRatio=0;
   if(rec.clientWorkTarget>0) businessRatio=Math.min(1,rec.clientWork/rec.clientWorkTarget);
   else if(sc.businessDeepWorkTarget>0) businessRatio=Math.min(1,(rec.businessMinutes||0)/sc.businessDeepWorkTarget);
-  else businessRatio=(outreachRatio+fupRatio)/2;
-  const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
-  const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
-  const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
+  else if(ot.std>0 || rec.followupsDue>0) businessRatio=(outreachRatio+fupRatio)/2;
+  const studyRatio=sc.studyTarget>0?Math.min(1,rec.study/sc.studyTarget):0;
+  const englishRatio=sc.englishTarget>0?Math.min(1,rec.english/sc.englishTarget):0;
+  const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):0;
   const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
   const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
-  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0.4):1;
+  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0):0;
   const deepWorkRatio=rec.deepWorkClean?1:0;
 
   const ratios=isPower
@@ -846,7 +849,6 @@ function scoreBreakdown(dateStr){
 
   const totalW=Object.values(w).reduce((a,b)=>a+b,0)||100;
   let score=Math.round(Object.keys(ratios).reduce((sum,k)=>sum+ratios[k]*(w[k]||0),0)/totalW*100);
-  if(rec.recoveryDay) score=Math.max(score,70);
   score=Math.max(0,Math.min(100,score));
   return {ratios,weights:w,score,isPower};
 }
@@ -1138,17 +1140,45 @@ function getNowNext(dateStr){
 
   if(curBlock){
     const idx=sc.blocks.findIndex(b=>b.start===curBlock.start && b.end===curBlock.end && b.label===curBlock.label);
+
+    // The current task is determined by the CURRENT TIME BLOCK.
+    // Never fall back to the first incomplete mission from the morning.
     nowMission=resolve(idx);
-    for(let i=idx-1;i>=0;i--){ const m=resolve(i); if(m){ passedMission=m; break; } }
-    for(let i=idx+1;i<sc.blocks.length;i++){ const m=resolve(i); if(m){ nextMission=m; break; } }
-  }
-  // Fallback for when the current block isn't a mission block (break, meal,
-  // class, etc.) or there's no active block at all — use plain priority order.
-  if(!nowMission){
+
+    // Passed = the latest mission block that is already behind the clock.
+    for(let i=idx-1;i>=0;i--){
+      const m=resolve(i);
+      if(m){ passedMission=m; break; }
+    }
+
+    // Next = the first mission block after the current block.
+    for(let i=idx+1;i<sc.blocks.length;i++){
+      const m=resolve(i);
+      if(m){ nextMission=m; break; }
+    }
+
+    // If we are inside a non-mission block (meal/break/class/routine),
+    // show the next scheduled mission rather than an old morning mission.
+    if(!nowMission) nowMission=nextMission;
+    if(nowMission===nextMission) nextMission=null;
+  }else if(dateStr!==todayStr()){
+    // For non-today views, keep the normal priority behavior.
     const curIdx=currentMissionIndex(missions);
     nowMission=missions[curIdx]||null;
-    if(!nextMission) nextMission=missions[curIdx+1]||null;
+    nextMission=missions[curIdx+1]||null;
+  }else{
+    // Today but no active block (gap before/after schedule): choose the
+    // first mission whose scheduled block has not ended yet.
+    const nowMins=new Date().getHours()*60+new Date().getMinutes();
+    for(let i=0;i<sc.blocks.length;i++){
+      const endMins=minsBetween('00:00',sc.blocks[i].end);
+      if(endMins>nowMins){
+        const m=resolve(i);
+        if(m){ nowMission=m; break; }
+      }
+    }
   }
+
   const curIdx=currentMissionIndex(missions);
   return {block:curBlock, passedMission, nowMission, nextMission, missions, curIdx};
 }
@@ -1312,14 +1342,14 @@ function renderToday(){
     </div>
   </div>
 
-  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">${execToggleBtn}</div>
-
   ${railHtml}
+  ${nowNextHtml}
+  ${contextHtml}
+
   <div style="display:flex;justify-content:flex-end;margin:-6px 0 10px;">
     <button class="pill ${rec.deepWorkClean?'active':''}" style="font-size:10px;" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK CLEAN</button>
   </div>
-  ${contextHtml}
-  ${nowNextHtml}
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">${execToggleBtn}</div>
   ${renderScheduleTimeline(d)}
 
   <div class="section-label">TODAY'S PROGRESS</div>
@@ -2454,7 +2484,7 @@ function importJSON(){
         if(r.businessMinutes==null) r.businessMinutes=0;
         if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      if(!DB.schemaVersion)DB.schemaVersion=5;
+      if(!DB.schemaVersion)DB.schemaVersion=6;
       STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
       const ok=await persistNow();
       applyTheme();
@@ -2476,7 +2506,7 @@ function confirmReset(){
 async function doReset(){
   STORAGE_UNAVAILABLE=false;
   try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
-  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
   await persistNow();
   closeModal(); applyTheme(); render();
 }
