@@ -129,6 +129,14 @@ input:focus,select:focus,textarea:focus{outline:1px solid var(--accent);}
 .check-row.strike .check-label{color:var(--text-faint);text-decoration:line-through;}
 .mission-complete-badge{font-size:11px;font-weight:700;color:var(--green);letter-spacing:.06em;}
 .next-pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px dashed var(--border);border-radius:100px;padding:8px 14px;font-size:12px;color:var(--text-dim);font-weight:600;margin-top:6px;}
+.rail-strip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 10px;margin-bottom:12px;overflow-x:auto;}
+.rail-item{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.rail-item.rail-now{flex:1.3;}
+.rail-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);font-weight:700;}
+.rail-val{font-size:12px;font-weight:700;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rail-now .rail-val{color:var(--accent);font-size:13px;}
+.rail-now .rail-label{color:var(--accent);}
+.rail-sep{color:var(--text-faint);font-size:12px;flex-shrink:0;}
 
 /* ---------- small stat cards ---------- */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
@@ -387,7 +395,7 @@ function powerDayBlocks(opts){
 }
 function defaultSettings(){
   return {
-    schemaVersion:4,
+    schemaVersion:5,
     wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
     weekSchedule:{
       mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
@@ -429,10 +437,14 @@ function defaultSettings(){
     },
     xp:{ outreach25:25,outreach50:50,outreach75:75,outreach100:100, followup:1, positiveReply:25, call:50, client:500,
          study30:25, study60:50, english30:25, gym:50, morningRoutine:25, nightRoutine:25, sleepTarget:25, classAttended:100 },
-    score:{ business:35, university:25, study:15, english:10, fitness:5, routine:5, recovery:5 },
+    score:{
+      power:{business:30, prospecting:15, outreach:10, followups:5, study:20, english:5, gym:5, morningRoutine:3, nightRoutine:3, deepWork:4},
+      normal:{business:30, classes:10, study:10, gym:10, followups:5, english:5, morningRoutine:5, nightRoutine:5, outreach:10, prospecting:5, deepWork:5}
+    },
     theme:'dark'
   };
 }
+const CATEGORY_LABELS={business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',study:'Study',english:'English',gym:'Gym',morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work',classes:'Classes'};
 const ENGLISH_ROTATION={mon:'Listening',tue:'Speaking',wed:'Reading',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Reading'};
 function defaultRecord(dateStr){
   return {
@@ -450,7 +462,7 @@ function defaultRecord(dateStr){
     classAttended:false,
     sleepHours:null,
     recoveryDay:false, examMode:'normal',
-    businessLearning:0, assignments:0, businessMinutes:0,
+    businessLearning:0, assignments:0, businessMinutes:0, deepWorkClean:false,
     dayComplete:false, notes:''
   };
 }
@@ -551,15 +563,25 @@ async function loadDB(){
     DB.settings=Object.assign(defaultSettings(),DB.settings||{});
     DB.settings.targets=Object.assign(defaultSettings().targets,DB.settings.targets||{});
     DB.settings.xp=Object.assign(defaultSettings().xp,DB.settings.xp||{});
-    DB.settings.score=Object.assign(defaultSettings().score,DB.settings.score||{});
+    // score is a nested {power:{...},normal:{...}} structure — a plain
+    // Object.assign would corrupt it if an old flat structure exists, so
+    // only merge the sub-objects, and fall back to fresh defaults if the
+    // saved shape doesn't match at all (e.g. pre-migration flat weights).
+    if(DB.settings.score && DB.settings.score.power && DB.settings.score.normal){
+      DB.settings.score.power=Object.assign({},defaultSettings().score.power,DB.settings.score.power);
+      DB.settings.score.normal=Object.assign({},defaultSettings().score.normal,DB.settings.score.normal);
+    }else{
+      DB.settings.score=defaultSettings().score;
+    }
     if(!DB.records)DB.records={};
     if(!DB.goals)DB.goals=defaultGoals();
     if(!DB.meta)DB.meta={bestStreak:0};
     if(!DB.pool)DB.pool={ready:0};
-    if(!DB.schemaVersion || DB.schemaVersion<4){
-      // one-time migration: adopt the new final university timetable and
-      // updated weekly business targets. Existing records, goals,
-      // streaks, XP and meta are left completely untouched.
+    if(!DB.schemaVersion || DB.schemaVersion<5){
+      // one-time migration: adopt the new final university timetable,
+      // updated weekly business targets, and the new point-based scoring
+      // rubrics. Existing records, goals, streaks and XP are left
+      // completely untouched (deepWorkClean just backfills as false).
       DB.settings.weekSchedule=defaultSettings().weekSchedule;
       DB.settings.targets.gymDays=defaultSettings().targets.gymDays;
       DB.settings.targets.weeklyOutreachTarget=defaultSettings().targets.weeklyOutreachTarget;
@@ -570,8 +592,9 @@ async function loadDB(){
       Object.values(DB.records).forEach(r=>{
         if(typeof r.examMode==='boolean') r.examMode=r.examMode?'exam':'normal';
         if(r.businessMinutes==null) r.businessMinutes=0;
+        if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      DB.schemaVersion=4;
+      DB.schemaVersion=5;
       saveDB();
     }
   }else if(readFailed){
@@ -581,12 +604,12 @@ async function loadDB(){
     // any real data already on this device the moment storage recovers.
     // Run this session entirely in memory instead and tell the user clearly.
     console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
     STORAGE_UNAVAILABLE=true;
     showStorageErrorBanner();
   }else{
     // Genuinely first launch on this device: no error, just nothing stored yet.
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
     await persistNow();
   }
 }
@@ -796,29 +819,36 @@ function xpForDay(dateStr){
 }
 function scoreBreakdown(dateStr){
   const rec=DB.records[dateStr];
-  const w=DB.settings.score;
-  if(!rec)return {ratios:{business:0,university:0,study:0,english:0,fitness:0,routine:0,recovery:0},weights:w,score:0};
+  if(!rec)return {ratios:{},weights:{},score:0,isPower:false};
+  const sc=getDaySchedule(dateStr);
+  const isPower=!!sc.powerCapacityDay;
+  const w=isPower?DB.settings.score.power:DB.settings.score.normal;
+
   const ot=getOutreachTargets(dateStr);
   const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):1;
   const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):1;
-  const businessRatio=(outreachRatio+fupRatio)/2;
-  const sc=getDaySchedule(dateStr);
-  const isUni=getDayType(dateStr)==='university';
-  const universityRatio=isUni?(rec.classAttended?1:0.4):1;
+  const prospectingRatio=sc.prospectingTarget>0?Math.min(1,rec.prospects/sc.prospectingTarget):1;
+  let businessRatio;
+  if(rec.clientWorkTarget>0) businessRatio=Math.min(1,rec.clientWork/rec.clientWorkTarget);
+  else if(sc.businessDeepWorkTarget>0) businessRatio=Math.min(1,(rec.businessMinutes||0)/sc.businessDeepWorkTarget);
+  else businessRatio=(outreachRatio+fupRatio)/2;
   const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
   const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
   const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
   const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
   const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
-  const routineRatio=(morningRatio+nightRatio)/2;
-  let recoveryRatio=1;
-  if(rec.sleepHours!=null) recoveryRatio=Math.max(0,Math.min(1,rec.sleepHours/7));
-  const ratios={business:businessRatio,university:universityRatio,study:studyRatio,english:englishRatio,fitness:fitnessRatio,routine:routineRatio,recovery:recoveryRatio};
+  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0.4):1;
+  const deepWorkRatio=rec.deepWorkClean?1:0;
+
+  const ratios=isPower
+    ? {business:businessRatio,prospecting:prospectingRatio,outreach:outreachRatio,followups:fupRatio,study:studyRatio,english:englishRatio,gym:fitnessRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,deepWork:deepWorkRatio}
+    : {business:businessRatio,classes:classesRatio,study:studyRatio,gym:fitnessRatio,followups:fupRatio,english:englishRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,outreach:outreachRatio,prospecting:prospectingRatio,deepWork:deepWorkRatio};
+
   const totalW=Object.values(w).reduce((a,b)=>a+b,0)||100;
   let score=Math.round(Object.keys(ratios).reduce((sum,k)=>sum+ratios[k]*(w[k]||0),0)/totalW*100);
   if(rec.recoveryDay) score=Math.max(score,70);
   score=Math.max(0,Math.min(100,score));
-  return {ratios,weights:w,score};
+  return {ratios,weights:w,score,isPower};
 }
 function scoreForDay(dateStr){
   const rec=DB.records[dateStr]; if(!rec)return 0;
@@ -1078,11 +1108,49 @@ function getCurrentBlock(dateStr){
   }
   return null;
 }
+function missionForBlockType(type,missions,opts){
+  opts=opts||{};
+  if(type==='business'){
+    // Prospecting is meant to happen in the day's first business block —
+    // once you're in a later one, it stops being offered as NOW/NEXT even
+    // if incomplete, so the window keeps moving forward instead of getting
+    // stuck pointing back at a morning task all day.
+    const order=opts.isFirstBusinessBlock
+      ? ['clientWork','followups','prospecting','outreach','businessDeepWork','build']
+      : ['clientWork','followups','outreach','businessDeepWork','build'];
+    for(const key of order){ const m=missions.find(x=>x.key===key); if(m && m.current<m.target) return m; }
+    for(const key of order){ const m=missions.find(x=>x.key===key); if(m) return m; }
+    return null;
+  }
+  if(type==='study') return missions.find(x=>x.key==='study')||null;
+  if(type==='english') return missions.find(x=>x.key==='english')||null;
+  if(type==='gym') return missions.find(x=>x.key==='gym')||null;
+  return null; // break, meal, class, routine, recovery, sleep — not mission blocks
+}
 function getNowNext(dateStr){
-  const block=getCurrentBlock(dateStr);
+  const sc=getDaySchedule(dateStr);
   const missions=getMissions(dateStr);
+  const curBlock=getCurrentBlock(dateStr);
+  const businessIndices=sc.blocks.map((b,i)=>b.type==='business'?i:-1).filter(i=>i>=0);
+  const firstBusinessIdx=businessIndices.length?businessIndices[0]:-1;
+  const resolve=(i)=>missionForBlockType(sc.blocks[i].type,missions,{isFirstBusinessBlock:i===firstBusinessIdx});
+  let nowMission=null, passedMission=null, nextMission=null;
+
+  if(curBlock){
+    const idx=sc.blocks.findIndex(b=>b.start===curBlock.start && b.end===curBlock.end && b.label===curBlock.label);
+    nowMission=resolve(idx);
+    for(let i=idx-1;i>=0;i--){ const m=resolve(i); if(m){ passedMission=m; break; } }
+    for(let i=idx+1;i<sc.blocks.length;i++){ const m=resolve(i); if(m){ nextMission=m; break; } }
+  }
+  // Fallback for when the current block isn't a mission block (break, meal,
+  // class, etc.) or there's no active block at all — use plain priority order.
+  if(!nowMission){
+    const curIdx=currentMissionIndex(missions);
+    nowMission=missions[curIdx]||null;
+    if(!nextMission) nextMission=missions[curIdx+1]||null;
+  }
   const curIdx=currentMissionIndex(missions);
-  return {block, nowMission:missions[curIdx]||null, nextMission:missions[curIdx+1]||null, missions, curIdx};
+  return {block:curBlock, passedMission, nowMission, nextMission, missions, curIdx};
 }
 function markMissionComplete(dateStr,missionKey){
   const rec=getRecord(dateStr);
@@ -1138,11 +1206,17 @@ function renderScheduleTimeline(d){
   if(!sc.blocks.length) return '';
   const curBlock=getCurrentBlock(d);
   const isCurrentBlock=(b)=> curBlock && b.start===curBlock.start && b.end===curBlock.end && b.label===curBlock.label;
-  const visibleBlocks=UI.scheduleOpen?sc.blocks:sc.blocks.filter(isCurrentBlock);
+  const isToday=d===todayStr();
+  const nowMins=isToday?(new Date().getHours()*60+new Date().getMinutes()):null;
+  // Once a block's end time has passed, drop it — the window only ever
+  // shows "now onward", never what's already behind you today.
+  const upcomingBlocks=isToday?sc.blocks.filter(b=>minsBetween('00:00',b.end)>nowMins):sc.blocks;
+  const visibleBlocks=UI.scheduleOpen?upcomingBlocks:upcomingBlocks.filter(isCurrentBlock);
+  const dayOver=isToday && upcomingBlocks.length===0;
   return `
   <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
     <span>CURRENT TASK WINDOW${sc.homeTime?` · home ~${sc.homeTime}`:''}</span>
-    <span style="cursor:pointer;color:var(--text-faint);font-size:11px;" onclick="UI.scheduleOpen=!UI.scheduleOpen;renderView();">${UI.scheduleOpen?'▲ collapse':'▼ full day'}</span>
+    <span style="cursor:pointer;color:var(--text-faint);font-size:11px;" onclick="UI.scheduleOpen=!UI.scheduleOpen;renderView();">${UI.scheduleOpen?'▲ collapse':'▼ rest of day'}</span>
   </div>
   <div class="card">
     ${visibleBlocks.map(b=>{
@@ -1154,7 +1228,7 @@ function renderScheduleTimeline(d){
         </div>
       </div>`;
     }).join('')}
-    ${(!UI.scheduleOpen && !curBlock)?'<div style="font-size:12px;color:var(--text-faint);text-align:center;padding:8px 0;">No active block right now — tap "full day" to see the whole schedule.</div>':''}
+    ${dayOver?'<div style="font-size:12px;color:var(--text-faint);text-align:center;padding:8px 0;">Day\u2019s timeline is done — nice work. See you tomorrow.</div>':((!UI.scheduleOpen && !curBlock)?'<div style="font-size:12px;color:var(--text-faint);text-align:center;padding:8px 0;">No active block right now — tap "rest of day" to see what\u2019s left.</div>':'')}
   </div>`;
 }
 function renderToday(){
@@ -1168,7 +1242,7 @@ function renderToday(){
   const sc=getDaySchedule(d);
   const badge=getDayBadge(d);
   const ot=getOutreachTargets(d);
-  const {block,nowMission,nextMission,missions,curIdx}=getNowNext(d);
+  const {block,passedMission,nowMission,nextMission,missions,curIdx}=getNowNext(d);
   const execMode=DB.settings.executionMode;
 
   // context strip: what's happening on the clock right now, if today
@@ -1184,17 +1258,24 @@ function renderToday(){
     }
   }
 
-  // NOW / NEXT
+  // Passed | Now | Next strip — reflects the schedule's current time block,
+  // not just a fixed priority queue, so it never gets stuck on a morning
+  // task once the day has moved on.
+  const railHtml=`<div class="rail-strip">
+    <div class="rail-item"><span class="rail-label">Passed</span><span class="rail-val">${passedMission?passedMission.label:'—'}</span></div>
+    <div class="rail-sep">→</div>
+    <div class="rail-item rail-now"><span class="rail-label">Now</span><span class="rail-val">${nowMission?nowMission.label:'—'}</span></div>
+    <div class="rail-sep">→</div>
+    <div class="rail-item"><span class="rail-label">Next</span><span class="rail-val">${nextMission?nextMission.label:'—'}</span></div>
+  </div>`;
+
+  // NOW card
   let nowNextHtml='';
   if(!nowMission){
     nowNextHtml=`<div class="card" style="text-align:center;"><div style="font-size:28px;margin-bottom:6px;">✅</div><div style="font-weight:700;margin-bottom:10px;">ALL MISSIONS COMPLETE</div><button class="btn-primary" onclick="openDayComplete()">MARK DAY COMPLETE</button></div>`;
   }else{
-    nowNextHtml=`<div class="section-label" style="margin-top:0;">NOW</div>`
-      + renderMissionCard(nowMission,d,true,false,false)
+    nowNextHtml=renderMissionCard(nowMission,d,true,false,false)
       + `<div class="btnrow" style="margin:-2px 0 6px;"><button class="btn-secondary" style="margin-top:0;" onclick="markMissionComplete('${d}','${nowMission.key}')">✓ MARK ${nowMission.label} COMPLETE</button></div>`;
-    if(nextMission){
-      nowNextHtml+=`<div style="text-align:center;margin-bottom:6px;"><div class="next-pill">NEXT → ${nextMission.icon} ${nextMission.label} ${nextMission.unit?`· ${nextMission.target}${nextMission.unit}`:`· ${nextMission.target}`}</div></div>`;
-    }
   }
 
   // compact today checklist
@@ -1206,7 +1287,7 @@ function renderToday(){
     </div>`;
   }).join('');
 
-  const catList=[['business','Business'],['university','University'],['study','Study'],['english','English'],['fitness','Fitness'],['routine','Routine']];
+  const catList=Object.keys(br.ratios).map(k=>[k,CATEGORY_LABELS[k]||k]);
 
   const execToggleBtn=`<button class="iconbtn" style="width:auto;padding:0 12px;font-size:11px;font-weight:700;letter-spacing:.04em;${execMode?'color:var(--accent);border-color:var(--accent);':''}" onclick="toggleExecutionMode()">🤖 ${execMode?'EXECUTION MODE':'FULL VIEW'}</button>`;
 
@@ -1215,7 +1296,7 @@ function renderToday(){
     <div class="hero-top">
       <div>
         <div class="hero-date">${humanDate(d)}</div>
-        <div class="hero-greet" style="color:${badge.color}">${badge.emoji} ${badge.label}</div>
+        <div class="hero-greet" style="color:${badge.color}">${badge.emoji} ${badge.label}${br.isPower?' — 100 PTS':''}</div>
       </div>
       <div class="streak-chip">🔥 ${streak} DAY${streak===1?'':'S'}</div>
     </div>
@@ -1233,6 +1314,10 @@ function renderToday(){
 
   <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">${execToggleBtn}</div>
 
+  ${railHtml}
+  <div style="display:flex;justify-content:flex-end;margin:-6px 0 10px;">
+    <button class="pill ${rec.deepWorkClean?'active':''}" style="font-size:10px;" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK CLEAN</button>
+  </div>
   ${contextHtml}
   ${nowNextHtml}
   ${renderScheduleTimeline(d)}
@@ -1240,7 +1325,7 @@ function renderToday(){
   <div class="section-label">TODAY'S PROGRESS</div>
   <div class="card">
     <div class="progress-track" style="height:10px;margin-bottom:12px;"><div class="progress-fill" style="width:${score}%;background:${rating.color};"></div></div>
-    <div class="statgrid two">
+    <div class="statgrid">
       ${catList.map(([k,label])=>`<div class="stat"><div class="stat-num" style="font-size:16px;">${Math.round(br.ratios[k]*100)}%</div><div class="stat-label">${label}</div></div>`).join('')}
     </div>
   </div>
@@ -1338,6 +1423,7 @@ function renderTodayFullExtras(d){
     <div class="pillrow" style="margin-top:10px;">
       <button class="pill ${rec.recoveryDay?'active':''}" onclick="toggleField('recoveryDay')">RECOVERY DAY</button>
       ${getDayType(d)==='university'?`<button class="pill ${rec.classAttended?'active':''}" onclick="toggleField('classAttended')">CLASSES ATTENDED</button>`:''}
+      <button class="pill ${rec.deepWorkClean?'active':''}" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK / NO DISTRACTIONS</button>
     </div>
     <div class="field" style="margin-top:10px;margin-bottom:0;">
       <label>Client work today? (target minutes)</label>
@@ -2059,10 +2145,20 @@ function renderTargetSettings(){
     </div>
   </div>
   <div class="settings-group">
-    <div class="settings-group-head">Score Weights (%)</div>
+    <div class="settings-group-head">🔥 Power Day Scoring (Thu/Sat/Sun) — 100 pts</div>
     <div class="settings-group-body">
-      ${Object.entries(DB.settings.score).map(([k,v])=>`
-        <div class="xrow"><label>${k[0].toUpperCase()+k.slice(1)}</label><input type="number" value="${v}" onchange="setSetting('score.${k}',this.value,true)"></div>`).join('')}
+      <div class="insight" style="margin-bottom:10px;">Power days have far more available time, so they're scored on a completely different points system than university days.</div>
+      ${Object.entries(DB.settings.score.power).map(([k,v])=>`
+        <div class="xrow"><label>${CATEGORY_LABELS[k]||k}</label><input type="number" value="${v}" onchange="setSetting('score.power.${k}',this.value,true)"></div>`).join('')}
+      <div class="xrow" style="border-top:1px solid var(--border);margin-top:4px;padding-top:10px;"><label style="font-weight:700;color:var(--text);">Total</label><b>${Object.values(DB.settings.score.power).reduce((a,b)=>a+b,0)} pts</b></div>
+    </div>
+  </div>
+  <div class="settings-group">
+    <div class="settings-group-head">🎓 University Day Scoring (Mon/Tue/Wed/Fri) — 100 pts</div>
+    <div class="settings-group-body">
+      ${Object.entries(DB.settings.score.normal).map(([k,v])=>`
+        <div class="xrow"><label>${CATEGORY_LABELS[k]||k}</label><input type="number" value="${v}" onchange="setSetting('score.normal.${k}',this.value,true)"></div>`).join('')}
+      <div class="xrow" style="border-top:1px solid var(--border);margin-top:4px;padding-top:10px;"><label style="font-weight:700;color:var(--text);">Total</label><b>${Object.values(DB.settings.score.normal).reduce((a,b)=>a+b,0)} pts</b></div>
     </div>
   </div>
   `;
@@ -2344,10 +2440,21 @@ function importJSON(){
       if(!data.settings||!data.records){ alert('This file does not look like a valid backup.'); return; }
       DB=data;
       DB.settings=Object.assign(defaultSettings(),DB.settings||{});
+      if(DB.settings.score && DB.settings.score.power && DB.settings.score.normal){
+        DB.settings.score.power=Object.assign({},defaultSettings().score.power,DB.settings.score.power);
+        DB.settings.score.normal=Object.assign({},defaultSettings().score.normal,DB.settings.score.normal);
+      }else{
+        DB.settings.score=defaultSettings().score;
+      }
       if(!DB.goals)DB.goals=defaultGoals();
       if(!DB.meta)DB.meta={bestStreak:0};
       if(!DB.pool)DB.pool={ready:0};
-      if(!DB.schemaVersion)DB.schemaVersion=4;
+      Object.values(DB.records||{}).forEach(r=>{
+        if(typeof r.examMode==='boolean') r.examMode=r.examMode?'exam':'normal';
+        if(r.businessMinutes==null) r.businessMinutes=0;
+        if(r.deepWorkClean==null) r.deepWorkClean=false;
+      });
+      if(!DB.schemaVersion)DB.schemaVersion=5;
       STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
       const ok=await persistNow();
       applyTheme();
@@ -2369,7 +2476,7 @@ function confirmReset(){
 async function doReset(){
   STORAGE_UNAVAILABLE=false;
   try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
-  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:4};
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
   await persistNow();
   closeModal(); applyTheme(); render();
 }
