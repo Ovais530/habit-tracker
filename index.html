@@ -395,41 +395,57 @@ function powerDayBlocks(opts){
 }
 function defaultSettings(){
   return {
-    schemaVersion:7,
+    schemaVersion:5,
     wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
-    /* Outcome-first: no second-by-second schedule. */
     weekSchedule:{
-      mon:{isUniversityDay:true,heavy:false,isPowerDay:false,powerCapacityDay:false,homeTime:'',blocks:[],studyTarget:30,englishTarget:30,buildTarget:30,prospectingTarget:0,salesCapacity:40,emailStudyTarget:15,emailWritingTarget:20,businessLearningTarget:25},
-      tue:{isUniversityDay:true,heavy:false,isPowerDay:false,powerCapacityDay:false,homeTime:'',blocks:[],studyTarget:30,englishTarget:30,buildTarget:30,prospectingTarget:0,salesCapacity:40,emailStudyTarget:15,emailWritingTarget:20,businessLearningTarget:25},
-      wed:{isUniversityDay:true,heavy:true,isPowerDay:false,powerCapacityDay:false,homeTime:'',blocks:[],studyTarget:30,englishTarget:30,buildTarget:30,prospectingTarget:0,salesCapacity:40,emailStudyTarget:15,emailWritingTarget:20,businessLearningTarget:25},
-      thu:{isUniversityDay:false,heavy:false,isPowerDay:true,powerCapacityDay:true,homeTime:'',blocks:[],studyTarget:270,englishTarget:30,buildTarget:60,prospectingTarget:250,salesCapacity:40,emailStudyTarget:0,emailWritingTarget:0,businessLearningTarget:0},
-      fri:{isUniversityDay:true,heavy:false,isPowerDay:false,powerCapacityDay:false,homeTime:'',blocks:[],studyTarget:30,englishTarget:30,buildTarget:30,prospectingTarget:0,salesCapacity:40,emailStudyTarget:15,emailWritingTarget:20,businessLearningTarget:25},
-      sat:{isUniversityDay:false,heavy:false,isPowerDay:true,powerCapacityDay:true,homeTime:'',blocks:[],studyTarget:270,englishTarget:30,buildTarget:60,prospectingTarget:250,salesCapacity:40,emailStudyTarget:0,emailWritingTarget:0,businessLearningTarget:0},
-      sun:{isUniversityDay:false,heavy:false,isPowerDay:true,powerCapacityDay:true,homeTime:'',weeklyReview:true,blocks:[],studyTarget:270,englishTarget:30,buildTarget:60,prospectingTarget:250,salesCapacity:40,emailStudyTarget:0,emailWritingTarget:0,businessLearningTarget:0,gymRest:true}
+      mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Ideology & Constitution'),cb('08:55','09:45','Ideology & Constitution'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Finance'),cb('11:40','12:30','Psychology'),bb('12:35','13:25','Free',true),cb('13:30','14:20','Civics & Community'),cb('14:25','15:15','Business Finance'),cb('15:20','16:05','Business Finance'),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:45, prospectingTarget:0, salesCapacity:50 },
+      tue:{ isUniversityDay:true, heavy:false, isPowerDay:true, powerCapacityDay:false, homeTime:'11:45',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Intro to OOP'),bb('08:55','09:45','Free',true),cb('09:50','10:40','Psychology'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free — home, business if online',false),bb('12:35','13:25','Free — home, business if online',false),cb('13:30','14:20','Intro to OOP'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      wed:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','Business Math II'),cb('08:55','09:45','Business Math II'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Economics'),cb('11:40','12:30','Business Math II'),cb('12:35','13:25','Business Economics'),bb('13:30','14:20','Free',true),cb('14:25','15:15','Civics & Community'),cb('15:20','16:05','Intro to OOP'),
+          ...eveningTail({skipSecondBusiness:true})],
+        studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
+      thu:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
+        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:90, prospectingTarget:50, salesCapacity:50, businessDeepWorkTarget:240 },
+      fri:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'12:45',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','08:50','OOP Lab'),cb('08:55','09:45','OOP Lab'),cb('09:50','10:40','OOP Lab'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free',true),bb('12:35','13:25','Jummah prep / lunch',true),cb('13:30','14:20','Business Economics'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          ...eveningTail()],
+        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      sat:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
+        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240 },
+      sun:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', weeklyReview:true,
+        blocks:powerDayBlocks({gym:false}), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240, gymRest:true }
     },
     targets:{
-      outreach:{university:{min:35,std:40,stretch:40},power:{min:35,std:40,stretch:40}},
-      study:30,english:30,portfolio:30,emailStudy:15,emailWriting:20,
-      gymDays:['mon','tue','wed','thu','fri','sat'],followupRatio:0.2,
-      weeklyOutreachTarget:240,weeklyProspectTarget:750,
-      businessLearning:25,businessLearningEnabled:true,revenueGoal:2000
+      outreach:{ university:{min:10,std:50,stretch:75}, power:{min:10,std:100,stretch:150} },
+      study:60, english:30, portfolio:30,
+      gymDays:['mon','tue','wed','thu','fri','sat'],
+      followupRatio:0.2,
+      weeklyOutreachTarget:250,
+      weeklyProspectTarget:300,
+      businessLearning:20, businessLearningEnabled:true,
+      revenueGoal:2000
     },
-    xp:{outreach25:25,outreach50:50,outreach75:75,outreach100:100,followup:1,positiveReply:25,call:50,client:500,
-        study30:25,study60:50,english30:25,gym:50,morningRoutine:0,nightRoutine:0,sleepTarget:0,classAttended:0},
+    xp:{ outreach25:25,outreach50:50,outreach75:75,outreach100:100, followup:1, positiveReply:25, call:50, client:500,
+         study30:25, study60:50, english30:25, gym:50, morningRoutine:25, nightRoutine:25, sleepTarget:25, classAttended:100 },
     score:{
-      power:{prospecting:30,outreach:25,study:20,business:10,build:10,english:5,gym:5,followups:5},
-      normal:{outreach:30,study:15,english:10,business:10,emailStudy:10,emailWriting:10,gym:5,followups:5,clientWork:5,build:5}
+      power:{business:30, prospecting:15, outreach:10, followups:5, study:20, english:5, gym:5, morningRoutine:3, nightRoutine:3, deepWork:4},
+      normal:{business:30, classes:10, study:10, gym:10, followups:5, english:5, morningRoutine:5, nightRoutine:5, outreach:10, prospecting:5, deepWork:5}
     },
     theme:'dark'
   };
 }
-const CATEGORY_LABELS={
-  business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',
-  study:'University Study',english:'English',gym:'Gym',emailStudy:'Study Good Emails',
-  emailWriting:'Email Writing',clientWork:'Client Work',build:'Portfolio / Client Work',
-  morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work',classes:'Classes'
-};
-const ENGLISH_ROTATION={mon:'Listening',tue:'Reading',wed:'Writing',thu:'Speaking',fri:'Listening',sat:'Speaking',sun:'Speaking'};
+const CATEGORY_LABELS={business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',study:'Study',english:'English',gym:'Gym',morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work',classes:'Classes'};
+const ENGLISH_ROTATION={mon:'Listening',tue:'Speaking',wed:'Reading',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Reading'};
 function defaultRecord(dateStr){
   return {
     date:dateStr,
@@ -437,7 +453,7 @@ function defaultRecord(dateStr){
     prospects:0, qualified:0, audited:0, contactsFound:0,
     followupsDue:0, followupsCompleted:0,
     replies:0, positiveReplies:0, calls:0, clientsClosed:0, revenue:0,
-    study:0, english:0, emailStudy:0, emailWriting:0,
+    study:0, english:0,
     gymDone:false,
     portfolio:0,
     clientWork:0, clientWorkTarget:0,
@@ -561,21 +577,25 @@ async function loadDB(){
     if(!DB.goals)DB.goals=defaultGoals();
     if(!DB.meta)DB.meta={bestStreak:0};
     if(!DB.pool)DB.pool={ready:0};
-    if(!DB.schemaVersion || DB.schemaVersion<7){
-       DB.settings.weekSchedule=defaultSettings().weekSchedule;
-       DB.settings.targets.gymDays=defaultSettings().targets.gymDays;
-       DB.settings.targets.weeklyOutreachTarget=defaultSettings().targets.weeklyOutreachTarget;
-       DB.settings.targets.weeklyProspectTarget=defaultSettings().targets.weeklyProspectTarget;
-       Object.values(DB.records).forEach(r=>{
-         if(typeof r.examMode==='boolean') r.examMode=r.examMode?'exam':'normal';
-         if(r.businessMinutes==null) r.businessMinutes=0;
-         if(r.deepWorkClean==null) r.deepWorkClean=false;
-         if(r.emailStudy==null) r.emailStudy=0;
-         if(r.emailWriting==null) r.emailWriting=0;
-       });
-       DB.schemaVersion=7;
-       DB.settings.schemaVersion=7;
-       saveDB();
+    if(!DB.schemaVersion || DB.schemaVersion<5){
+      // one-time migration: adopt the new final university timetable,
+      // updated weekly business targets, and the new point-based scoring
+      // rubrics. Existing records, goals, streaks and XP are left
+      // completely untouched (deepWorkClean just backfills as false).
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.settings.targets.gymDays=defaultSettings().targets.gymDays;
+      DB.settings.targets.weeklyOutreachTarget=defaultSettings().targets.weeklyOutreachTarget;
+      DB.settings.targets.weeklyProspectTarget=defaultSettings().targets.weeklyProspectTarget;
+      DB.settings.targets.revenueGoal=DB.settings.targets.revenueGoal||defaultSettings().targets.revenueGoal;
+      if(DB.settings.executionMode==null)DB.settings.executionMode=true;
+      // migrate old boolean examMode to the new 3-tier string per record
+      Object.values(DB.records).forEach(r=>{
+        if(typeof r.examMode==='boolean') r.examMode=r.examMode?'exam':'normal';
+        if(r.businessMinutes==null) r.businessMinutes=0;
+        if(r.deepWorkClean==null) r.deepWorkClean=false;
+      });
+      DB.schemaVersion=5;
+      saveDB();
     }
   }else if(readFailed){
     // CRITICAL: local storage could not be read (IndexedDB unavailable,
@@ -584,12 +604,12 @@ async function loadDB(){
     // any real data already on this device the moment storage recovers.
     // Run this session entirely in memory instead and tell the user clearly.
     console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
     STORAGE_UNAVAILABLE=true;
     showStorageErrorBanner();
   }else{
     // Genuinely first launch on this device: no error, just nothing stored yet.
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
     await persistNow();
   }
 }
@@ -680,9 +700,6 @@ function getDaySchedule(dateStr){
   if(sched.salesCapacity==null) sched.salesCapacity=50;
   if(sched.powerCapacityDay==null) sched.powerCapacityDay=false;
   if(sched.businessDeepWorkTarget==null) sched.businessDeepWorkTarget=0;
-  if(sched.emailStudyTarget==null) sched.emailStudyTarget=0;
-  if(sched.emailWritingTarget==null) sched.emailWritingTarget=0;
-  if(sched.businessLearningTarget==null) sched.businessLearningTarget=0;
   if(sched.gymRest==null) sched.gymRest=false;
   return sched;
 }
@@ -703,8 +720,13 @@ function isGymDay(dateStr){
 }
 function getOutreachTargets(dateStr){
   const rec=getRecord(dateStr);
+  const sc=getDaySchedule(dateStr);
+  const capacity=sc.salesCapacity||0;
+  const min=Math.min(10,capacity);
+  const newAvailable=Math.max(0,capacity-rec.followupsDue);
   if(rec.examMode==='exam')return {min:0,std:0,stretch:0,capacity:0,newAvailable:0};
-  return {min:35,std:40,stretch:40,capacity:40,newAvailable:40};
+  if(rec.examMode==='prep')return {min,std:Math.min(newAvailable,min),stretch:min,capacity,newAvailable:Math.min(newAvailable,min)};
+  return {min,std:newAvailable,stretch:capacity,capacity,newAvailable};
 }
 function suggestBreakActivity(mins,offline){
   if(!offline)return 'Follow-ups / outreach / replies if you have signal';
@@ -726,24 +748,46 @@ function getMissions(dateStr){
   const ot=getOutreachTargets(dateStr);
   const exam=rec.examMode||'normal';
   const missions=[];
-
-  if(rec.clientWorkTarget>0) missions.push({key:'clientWork',label:'CLIENT WORK',icon:'💼',current:rec.clientWork,target:rec.clientWorkTarget,type:'counter',field:'clientWork',amounts:[15,30,60],unit:'min'});
-  if(rec.followupsDue>0) missions.push({key:'followups',label:'FOLLOW-UPS',icon:'📨',current:rec.followupsCompleted,target:rec.followupsDue,type:'counter',field:'followupsCompleted',amounts:[5,10],unit:'',adjustTarget:true});
-
-  if(exam!=='exam') missions.push({key:'outreach',label:'OUTREACH',icon:'📣',current:totalOutreach(rec),target:ot.std,type:'counter',sub:'Daily target: 35–40 quality outreaches',amounts:[5,10,25],channelPick:true,unit:''});
-  if(sc.prospectingTarget>0 && exam==='normal') missions.push({key:'prospecting',label:'PROSPECTING',icon:'🔎',current:rec.prospects,target:sc.prospectingTarget,type:'counter',field:'prospects',amounts:[10,25,50],unit:'',sub:'Complete, verified prospect records ready for outreach'});
-
+  if(rec.clientWorkTarget>0){
+    missions.push({key:'clientWork',label:'CLIENT WORK',icon:'💼',current:rec.clientWork,target:rec.clientWorkTarget,type:'counter',
+      field:'clientWork',amounts:[15,30,60],unit:'min'});
+  }
+  missions.push({key:'followups',label:'FOLLOW-UPS',icon:'📨',current:rec.followupsCompleted,target:rec.followupsDue,type:'counter',
+    field:'followupsCompleted', amounts:[5,10], unit:'', adjustTarget:true});
+  if(exam!=='exam'){
+    missions.push({key:'outreach',label:'OUTREACH',icon:'📣',current:totalOutreach(rec),target:ot.std,type:'counter',
+      sub:`capacity ${ot.capacity} · ${rec.followupsDue} follow-ups due today`, amounts:[5,10,25], channelPick:true, unit:''});
+  }
+  if(sc.prospectingTarget>0 && exam==='normal'){
+    missions.push({key:'prospecting',label:'PROSPECTING',icon:'🔎',current:rec.prospects,target:sc.prospectingTarget,type:'counter',
+      field:'prospects',amounts:[5,10,25],unit:'', sub:'Qualified prospects added to the pipeline'});
+  }
+  if(sc.powerCapacityDay && sc.businessDeepWorkTarget>0 && exam==='normal'){
+    missions.push({key:'businessDeepWork',label:'BUSINESS DEEP WORK',icon:'⚙️',current:rec.businessMinutes,target:sc.businessDeepWorkTarget,type:'counter',
+      field:'businessMinutes',amounts:[30,60,90],unit:'min',sub:'Prospecting / outreach / follow-ups / client build time'});
+  }
   let studyTarget=sc.studyTarget;
   if(exam==='prep')studyTarget=Math.max(sc.studyTarget,180);
   if(exam==='exam')studyTarget=Math.max(sc.studyTarget,240);
-  missions.push({key:'study',label:'UNIVERSITY STUDY',icon:'🎓',current:rec.study,target:studyTarget,type:'counter',field:'study',amounts:studyTarget>=150?[30,60,90]:[15,30,60],unit:'min'});
-  missions.push({key:'english',label:'ENGLISH',icon:'🇬🇧',current:rec.english,target:sc.englishTarget,type:'counter',field:'english',amounts:[15,30],unit:'min',sub:`Today's focus: ${ENGLISH_ROTATION[dayAbbr(dateStr)]}`});
-
-  if(sc.emailStudyTarget>0 && exam==='normal') missions.push({key:'emailStudy',label:'STUDY GOOD EMAILS',icon:'📖',current:rec.emailStudy,target:sc.emailStudyTarget,type:'counter',field:'emailStudy',amounts:[15],unit:'min',sub:'Analyze strong ecommerce emails'});
-  if(sc.emailWritingTarget>0 && exam==='normal') missions.push({key:'emailWriting',label:'EMAIL WRITING PRACTICE',icon:'✍️',current:rec.emailWriting,target:sc.emailWritingTarget,type:'counter',field:'emailWriting',amounts:[15,30],unit:'min',sub:'Write and improve emails'});
-  if(sc.buildTarget>0 && exam==='normal') missions.push({key:'build',label:'PORTFOLIO / CLIENT BUILD',icon:'🏗️',current:rec.portfolio,target:sc.buildTarget,type:'counter',field:'portfolio',amounts:[15,30,60],unit:'min',sub:'Portfolio or client work when applicable'});
-  if(s.targets.businessLearningEnabled && sc.businessLearningTarget>0 && exam==='normal') missions.push({key:'businessLearning',label:'BUSINESS LESSON',icon:'🧠',current:rec.businessLearning,target:sc.businessLearningTarget,type:'counter',field:'businessLearning',amounts:[10,20,30],unit:'min',sub:'20–30 min lesson; execution comes first'});
-  if(isGymDay(dateStr)) missions.push({key:'gym',label:'GYM',icon:'🏋️',current:rec.gymDone?1:0,target:1,type:'toggle',field:'gymDone',sub:'Complete the session'});
+  missions.push({key:'study',label:'UNIVERSITY STUDY',icon:'🎓',current:rec.study,
+    target:studyTarget,type:'counter',
+    field:'study',amounts: studyTarget>=150?[30,60,90]:[15,30,60],unit:'min'});
+  missions.push({key:'english',label:'ENGLISH',icon:'🇬🇧',current:rec.english,target:sc.englishTarget,type:'counter',
+    field:'english',amounts:[15,30],unit:'min',sub:`Today's focus: ${ENGLISH_ROTATION[dayAbbr(dateStr)]}`});
+  if(sc.buildTarget>0 && exam==='normal'){
+    missions.push({key:'build',label:'BUILD',icon:'🏗️',current:rec.portfolio,target:sc.buildTarget,type:'counter',
+      field:'portfolio',amounts:[15,30,60],unit:'min',sub:'Portfolio / client build work'});
+  }
+  if(s.targets.businessLearningEnabled && s.targets.businessLearning>0 && exam==='normal'){
+    missions.push({key:'businessLearning',label:'BUSINESS LEARNING',icon:'🧠',current:rec.businessLearning,target:s.targets.businessLearning,type:'counter',
+      field:'businessLearning',amounts:[10,20,30],unit:'min',sub:'Secondary — never at the expense of execution'});
+  }
+  if(isGymDay(dateStr)){
+    missions.push({key:'gym',label:'GYM',icon:'🏋️',current:rec.gymDone?1:0,target:1,type:'toggle',field:'gymDone',sub:'~100 min block: 20 travel + 60 workout + 20 travel'});
+  }
+  const nightKeys=Object.keys(rec.night);
+  missions.push({key:'night',label:'NIGHT ROUTINE',icon:'🌙',current:nightKeys.filter(k=>rec.night[k]).length,target:nightKeys.length,type:'checklist',field:'night',
+    items:[['skincare','Skincare'],['teeth','Brush teeth'],['clothes','Prepare clothes'],['bag','Prepare bag'],['plan','Plan tomorrow'],['phoneAway','Phone away']]});
   return missions;
 }
 function currentMissionIndex(missions){
@@ -778,28 +822,33 @@ function scoreBreakdown(dateStr){
   if(!rec)return {ratios:{},weights:{},score:0,isPower:false};
   const sc=getDaySchedule(dateStr);
   const isPower=!!sc.powerCapacityDay;
-  const items=[];
-  const add=(key,current,target)=>{if(target>0)items.push([key,Math.min(1,(current||0)/target)]);};
-  const ot=getOutreachTargets(dateStr);
-  if(ot.std>0)add('outreach',totalOutreach(rec),ot.std);
-  if(rec.followupsDue>0)add('followups',rec.followupsCompleted,rec.followupsDue);
-  if(sc.prospectingTarget>0)add('prospecting',rec.prospects,sc.prospectingTarget);
-  add('study',rec.study,sc.studyTarget); add('english',rec.english,sc.englishTarget);
-  if(sc.emailStudyTarget>0)add('emailStudy',rec.emailStudy,sc.emailStudyTarget);
-  if(sc.emailWritingTarget>0)add('emailWriting',rec.emailWriting,sc.emailWritingTarget);
-  if(sc.buildTarget>0)add('build',rec.portfolio,sc.buildTarget);
-  if(sc.businessLearningTarget>0)add('business',rec.businessLearning,sc.businessLearningTarget);
-  if(rec.clientWorkTarget>0)add('clientWork',rec.clientWork,rec.clientWorkTarget);
-  if(isGymDay(dateStr))add('gym',rec.gymDone?1:0,1);
+  const w=isPower?DB.settings.score.power:DB.settings.score.normal;
 
-  const baseWeights=isPower
-    ? {prospecting:30,outreach:25,study:20,business:10,build:10,english:5,gym:5,followups:5}
-    : {outreach:30,study:15,english:10,business:10,emailStudy:10,emailWriting:10,gym:5,followups:5,clientWork:5,build:5};
-  const ratios={},weights={};
-  items.forEach(([key,ratio])=>{ratios[key]=ratio;if(baseWeights[key])weights[key]=baseWeights[key];});
-  const totalW=Object.values(weights).reduce((a,b)=>a+b,0);
-  const score=totalW?Math.round(Object.keys(weights).reduce((sum,k)=>sum+(ratios[k]||0)*weights[k],0)/totalW*100):0;
-  return {ratios,weights,score:Math.max(0,Math.min(100,score)),isPower};
+  const ot=getOutreachTargets(dateStr);
+  const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):1;
+  const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):1;
+  const prospectingRatio=sc.prospectingTarget>0?Math.min(1,rec.prospects/sc.prospectingTarget):1;
+  let businessRatio;
+  if(rec.clientWorkTarget>0) businessRatio=Math.min(1,rec.clientWork/rec.clientWorkTarget);
+  else if(sc.businessDeepWorkTarget>0) businessRatio=Math.min(1,(rec.businessMinutes||0)/sc.businessDeepWorkTarget);
+  else businessRatio=(outreachRatio+fupRatio)/2;
+  const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
+  const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
+  const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
+  const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
+  const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
+  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0.4):1;
+  const deepWorkRatio=rec.deepWorkClean?1:0;
+
+  const ratios=isPower
+    ? {business:businessRatio,prospecting:prospectingRatio,outreach:outreachRatio,followups:fupRatio,study:studyRatio,english:englishRatio,gym:fitnessRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,deepWork:deepWorkRatio}
+    : {business:businessRatio,classes:classesRatio,study:studyRatio,gym:fitnessRatio,followups:fupRatio,english:englishRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,outreach:outreachRatio,prospecting:prospectingRatio,deepWork:deepWorkRatio};
+
+  const totalW=Object.values(w).reduce((a,b)=>a+b,0)||100;
+  let score=Math.round(Object.keys(ratios).reduce((sum,k)=>sum+ratios[k]*(w[k]||0),0)/totalW*100);
+  if(rec.recoveryDay) score=Math.max(score,70);
+  score=Math.max(0,Math.min(100,score));
+  return {ratios,weights:w,score,isPower};
 }
 function scoreForDay(dateStr){
   const rec=DB.records[dateStr]; if(!rec)return 0;
@@ -813,14 +862,17 @@ function ratingFor(score){
   return {emoji:'🔴',label:'LOW',color:'var(--red)'};
 }
 function isNoZeroDay(dateStr){
-  const rec=DB.records[dateStr];
-  if(!rec)return false;
+  const rec=DB.records[dateStr]; if(!rec)return false;
   if(rec.recoveryDay)return true;
   const exam=rec.examMode||'normal';
-  if(exam==='exam')return rec.study>=60 || rec.english>=20 || totalOutreach(rec)>=1;
-  const sc=getDaySchedule(dateStr), ot=getOutreachTargets(dateStr);
-  return (ot.std>0 && totalOutreach(rec)>=ot.min) || rec.study>=30 || rec.english>=30 ||
-         (sc.prospectingTarget>0 && rec.prospects>=sc.prospectingTarget) || rec.gymDone || rec.clientWork>0;
+  const ot=getOutreachTargets(dateStr);
+  const outreachOk=ot.min<=0 || totalOutreach(rec)>=Math.min(10,ot.min);
+  const fupOk=rec.followupsDue<=0 || rec.followupsCompleted>=rec.followupsDue;
+  const engOk=rec.english>=20;
+  const studyOk=exam==='exam'?rec.study>=60:rec.study>=30;
+  const morningOk=Object.values(rec.morning).filter(Boolean).length>=3;
+  if(exam==='exam')return fupOk && engOk && studyOk && morningOk; // outreach not required during exams
+  return outreachOk && fupOk && engOk && studyOk && morningOk;
 }
 function computeStreak(){
   let streak=0; let d=todayStr();
@@ -1076,9 +1128,29 @@ function missionForBlockType(type,missions,opts){
   return null; // break, meal, class, routine, recovery, sleep — not mission blocks
 }
 function getNowNext(dateStr){
+  const sc=getDaySchedule(dateStr);
   const missions=getMissions(dateStr);
+  const curBlock=getCurrentBlock(dateStr);
+  const businessIndices=sc.blocks.map((b,i)=>b.type==='business'?i:-1).filter(i=>i>=0);
+  const firstBusinessIdx=businessIndices.length?businessIndices[0]:-1;
+  const resolve=(i)=>missionForBlockType(sc.blocks[i].type,missions,{isFirstBusinessBlock:i===firstBusinessIdx});
+  let nowMission=null, passedMission=null, nextMission=null;
+
+  if(curBlock){
+    const idx=sc.blocks.findIndex(b=>b.start===curBlock.start && b.end===curBlock.end && b.label===curBlock.label);
+    nowMission=resolve(idx);
+    for(let i=idx-1;i>=0;i--){ const m=resolve(i); if(m){ passedMission=m; break; } }
+    for(let i=idx+1;i<sc.blocks.length;i++){ const m=resolve(i); if(m){ nextMission=m; break; } }
+  }
+  // Fallback for when the current block isn't a mission block (break, meal,
+  // class, etc.) or there's no active block at all — use plain priority order.
+  if(!nowMission){
+    const curIdx=currentMissionIndex(missions);
+    nowMission=missions[curIdx]||null;
+    if(!nextMission) nextMission=missions[curIdx+1]||null;
+  }
   const curIdx=currentMissionIndex(missions);
-  return {block:null,passedMission:curIdx>0?missions[curIdx-1]||null:null,nowMission:missions[curIdx]||null,nextMission:missions[curIdx+1]||null,missions,curIdx};
+  return {block:curBlock, passedMission, nowMission, nextMission, missions, curIdx};
 }
 function markMissionComplete(dateStr,missionKey){
   const rec=getRecord(dateStr);
@@ -1173,9 +1245,18 @@ function renderToday(){
   const {block,passedMission,nowMission,nextMission,missions,curIdx}=getNowNext(d);
   const execMode=DB.settings.executionMode;
 
-  // Outcome-first: the app no longer tells you what to do based on the clock.
-  // It only shows the next meaningful goal.
-  const contextHtml=`<div class="insight" style="border-color:var(--accent);">🎯 <b>Outcome mode:</b> finish meaningful goals. No class-by-class, break-by-break or minute-by-minute tracking.</div>`;
+  // context strip: what's happening on the clock right now, if today
+  let contextHtml='';
+  if(block){
+    const icon=(BLOCK_TYPE_META[block.type]||{}).icon||'•';
+    if(block.type==='class'){
+      contextHtml=`<div class="insight" style="border-color:var(--text-faint);">${icon} IN CLASS · ${block.label} · ends ${block.end} (${block.remainingMins}m left)</div>`;
+    }else if(block.type==='break'){
+      contextHtml=`<div class="insight">${block.offline?'📴':'🌐'} ${block.label.toUpperCase()} · ends ${block.end} (${block.remainingMins}m left) · ${suggestBreakActivity(minsBetween(block.start,block.end),block.offline)}</div>`;
+    }else{
+      contextHtml=`<div class="insight" style="border-color:var(--text-faint);">${icon} ${block.label} · ends ${block.end} (${block.remainingMins}m left)</div>`;
+    }
+  }
 
   // Passed | Now | Next strip — reflects the schedule's current time block,
   // not just a fixed priority queue, so it never gets stuck on a morning
@@ -1231,10 +1312,15 @@ function renderToday(){
     </div>
   </div>
 
-  ${railHtml}
-  ${nowNextHtml}
-  ${contextHtml}
   <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">${execToggleBtn}</div>
+
+  ${railHtml}
+  <div style="display:flex;justify-content:flex-end;margin:-6px 0 10px;">
+    <button class="pill ${rec.deepWorkClean?'active':''}" style="font-size:10px;" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK CLEAN</button>
+  </div>
+  ${contextHtml}
+  ${nowNextHtml}
+  ${renderScheduleTimeline(d)}
 
   <div class="section-label">TODAY'S PROGRESS</div>
   <div class="card">
@@ -1244,7 +1330,7 @@ function renderToday(){
     </div>
   </div>
 
-  <div class="section-label">TODAY'S GOALS</div>
+  <div class="section-label">TODAY'S CHECKLIST</div>
   <div class="card">${checklistHtml}</div>
 
   ${execMode?'':renderTodayFullExtras(d)}
@@ -1252,43 +1338,133 @@ function renderToday(){
   return html;
 }
 function renderTodayFullExtras(d){
-  const rec=getRecord(d), sc=getDaySchedule(d), missions=getMissions(d);
+  const rec=getRecord(d);
+  const sc=getDaySchedule(d);
+  const ot=getOutreachTargets(d);
+  const missions=getMissions(d);
+  const curIdx=currentMissionIndex(missions);
+  const morningItems=[['wake','Wake on time'],['fajr','Fajr'],['fresh','Freshen up'],['clothes','Change clothes'],['breakfast','Breakfast'],['leave','Leave home']];
+  const morningDone=morningItems.filter(([k])=>rec.morning[k]).length;
+  let missionsHtml='';
+  missions.forEach((m,i)=>{
+    const done=m.current>=m.target;
+    missionsHtml+=renderMissionCard(m,d,i===curIdx,done,i===curIdx+1);
+  });
+
   return `
-  <div class="section-label">FULL GOAL LIST</div>
-  ${missions.map((m,i)=>renderMissionCard(m,d,false,m.current>=m.target,i===currentMissionIndex(missions))).join('')}
+  <div class="card">
+    <div class="collapse-head" onclick="UI.morningOpen=!UI.morningOpen;renderView();">
+      <div class="card-title" style="margin-bottom:0;">MORNING · ${morningDone}/6</div>
+      <span style="color:var(--text-faint);font-size:12px;">${UI.morningOpen?'▲':'▼'}</span>
+    </div>
+    <div class="collapse-body ${UI.morningOpen?'':'hidden'}">
+      <div class="checklist">
+        ${morningItems.map(([k,label])=>`
+          <div class="check-row ${rec.morning[k]?'strike':''}" onclick="toggleNested('morning','${k}')">
+            <div class="check-box ${rec.morning[k]?'on':''}">${rec.morning[k]?'✓':''}</div>
+            <div class="check-label">${label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">FULL MISSION QUEUE</div>
+  ${missionsHtml}
+
+
+  <div class="card">
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${ot.capacity}</div><div class="stat-label">Planned capacity</div></div>
+      <div class="stat"><div class="stat-num">${rec.followupsDue}</div><div class="stat-label">Follow-ups due</div></div>
+      <div class="stat"><div class="stat-num">${ot.newAvailable}</div><div class="stat-label">New outreach avail.</div></div>
+    </div>
+  </div>
+
+  ${sc.powerCapacityDay?renderPowerCapacityCard(d):''}
+
+  <div class="section-label">PROSPECT POOL</div>
+  <div class="card">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;">
+      <div><div class="stat-num" style="font-size:26px;">${DB.pool.ready||0}</div><div class="stat-label">Ready to outreach</div></div>
+    </div>
+    <div class="btnrow">
+      <button class="qbtn" onclick="bumpPool(5)">+5</button>
+      <button class="qbtn" onclick="bumpPool(10)">+10</button>
+      <button class="qbtn neg" onclick="bumpPool(-10)">−10 used</button>
+    </div>
+  </div>
+
   <div class="section-label">BUSINESS NUMBERS</div>
-  <div class="card"><div class="statgrid">
-    <div class="stat"><div class="stat-num">${rec.prospects}</div><div class="stat-label">Prospect records</div>
-      <div class="stat-btns"><button class="mini-btn" onclick="bump('prospects',10)">+10</button><button class="mini-btn" onclick="bump('prospects',25)">+25</button></div></div>
-    <div class="stat"><div class="stat-num">${totalOutreach(rec)}</div><div class="stat-label">Outreach</div></div>
-    <div class="stat"><div class="stat-num">${rec.replies}</div><div class="stat-label">Replies</div></div>
-    <div class="stat"><div class="stat-num">${rec.calls}</div><div class="stat-label">Calls</div></div>
-    <div class="stat"><div class="stat-num">${rec.clientsClosed}</div><div class="stat-label">Clients</div></div>
-    <div class="stat"><div class="stat-num">$${rec.revenue}</div><div class="stat-label">Revenue</div><div class="stat-btns"><button class="mini-btn" onclick="promptRevenue()">ADD</button></div></div>
-  </div></div>
+  <div class="card">
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${rec.prospects}</div><div class="stat-label">Prospects</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('prospects',5)">+5</button><button class="mini-btn" onclick="bump('prospects',10)">+10</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.replies}</div><div class="stat-label">Replies</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('replies',1)">+1</button><button class="mini-btn" onclick="bump('positiveReplies',1)">+POS</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.calls}</div><div class="stat-label">Calls</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('calls',1)">+1</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.clientsClosed}</div><div class="stat-label">Clients</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('clientsClosed',1)">+1</button></div></div>
+      <div class="stat"><div class="stat-num">$${rec.revenue}</div><div class="stat-label">Revenue</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="promptRevenue()">ADD</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.assignments}</div><div class="stat-label">Assignments</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('assignments',1)">+1</button></div></div>
+    </div>
+  </div>
+
   <div class="section-label">DAY MODE</div>
   <div class="card">
-    <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${sc.isUniversityDay?'🎓 UNIVERSITY DAY':'🔥 OFF DAY — OUTPUT FOCUS'}</div>
-    <div style="font-size:11px;color:var(--text-faint);line-height:1.5;">
-      ${sc.isUniversityDay?'English 30m · business lesson 20–30m · study good emails 15m · email writing 15–30m · then prioritize outreach.':'University study 4–5h · 250–300 complete prospect records · 35–40 outreach · client work/portfolio if needed · gym.'}
-    </div>
-    <div class="pillrow" style="margin-top:10px;">
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:6px;">UNIVERSITY MODE</div>
+    <div class="pillrow">
       <button class="pill ${rec.examMode==='normal'?'active':''}" onclick="setExamMode('normal')">NORMAL</button>
       <button class="pill ${rec.examMode==='prep'?'active':''}" onclick="setExamMode('prep')">EXAM PREP</button>
       <button class="pill ${rec.examMode==='exam'?'active':''}" onclick="setExamMode('exam')">EXAM</button>
-      <button class="pill ${rec.recoveryDay?'active':''}" onclick="toggleField('recoveryDay')">RECOVERY DAY</button>
     </div>
-    <div class="field" style="margin-top:10px;margin-bottom:0;"><label>Client work target (optional, minutes)</label><input type="number" value="${rec.clientWorkTarget}" onchange="setNum('clientWorkTarget',this.value)"></div>
+    <div class="pillrow" style="margin-top:10px;">
+      <button class="pill ${rec.recoveryDay?'active':''}" onclick="toggleField('recoveryDay')">RECOVERY DAY</button>
+      ${getDayType(d)==='university'?`<button class="pill ${rec.classAttended?'active':''}" onclick="toggleField('classAttended')">CLASSES ATTENDED</button>`:''}
+      <button class="pill ${rec.deepWorkClean?'active':''}" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK / NO DISTRACTIONS</button>
+    </div>
+    <div class="field" style="margin-top:10px;margin-bottom:0;">
+      <label>Client work today? (target minutes)</label>
+      <input type="number" value="${rec.clientWorkTarget}" onchange="setNum('clientWorkTarget',this.value)">
+    </div>
   </div>
+
   <div class="section-label">SLEEP</div>
-  <div class="card"><div class="row2">
-    <div class="field" style="margin-bottom:0;"><label>Hours slept</label><input type="number" step="0.5" value="${rec.sleepHours??''}" placeholder="7.5" onchange="setNum('sleepHours',this.value)"></div>
-    <div class="field" style="margin-bottom:0;"><label>Status</label><input value="${rec.sleepHours==null?'Not logged':(rec.sleepHours>=7?'On target':'Below target')}" disabled></div>
-  </div></div>`;
+  <div class="card">
+    <div class="row2">
+      <div class="field" style="margin-bottom:0;"><label>Hours slept</label><input type="number" step="0.5" value="${rec.sleepHours??''}" placeholder="7.5" onchange="setNum('sleepHours',this.value)"></div>
+      <div class="field" style="margin-bottom:0;"><label>Status</label><input value="${rec.sleepHours==null?'Not logged':(rec.sleepHours>=7?'On target':'Below target')}" disabled></div>
+    </div>
+  </div>
+  `;
 }
 function renderPowerCapacityCard(d){
-  return `<div class="card"><b>OFF-DAY OUTPUT</b><div style="font-size:11px;color:var(--text-faint);margin-top:6px;">Don't chase an hour number. Chase useful output: 250–300 complete prospect records, 35–40 quality outreaches, study, and client/portfolio work.</div></div>`;
+  const rec=getRecord(d);
+  const businessH=(rec.businessMinutes||0)/60;
+  const studyH=rec.study/60;
+  const engH=rec.english/60;
+  const gymH=rec.gymDone?100/60:0;
+  const total=businessH+studyH+engH+gymH;
+  return `
+  <div class="section-label">POWER DAY CAPACITY (12–15h structured day)</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div class="stat-num" style="font-size:22px;">${total.toFixed(1)}h</div>
+      <div class="cmp-prev">of 12–15h target</div>
+    </div>
+    <div class="progress-track" style="margin-bottom:12px;"><div class="progress-fill" style="width:${Math.min(100,total/13*100)}%"></div></div>
+    <div class="statgrid">
+      <div class="stat"><div class="stat-num">${businessH.toFixed(1)}h</div><div class="stat-label">Business</div></div>
+      <div class="stat"><div class="stat-num">${studyH.toFixed(1)}h</div><div class="stat-label">University</div></div>
+      <div class="stat"><div class="stat-num">${engH.toFixed(1)}h</div><div class="stat-label">English</div></div>
+      <div class="stat"><div class="stat-num">${gymH.toFixed(1)}h</div><div class="stat-label">Gym</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin-top:10px;">This tracks structured, logged time only — meals, prayer, breaks and transitions aren't counted, and sleep is never sacrificed to hit this number.</div>
+  </div>`;
 }
+
 function renderMissionCard(m,dateStr,isCurrent,done,isNext){
   let inner='';
   if(m.type==='counter'){
@@ -1901,26 +2077,45 @@ function renderScheduleSettings(){
 }
 function renderDayEditor(k,label){
   const sc=DB.settings.weekSchedule[k];
+  const typeOptions=[['class','Class'],['break','Break'],['business','Business'],['study','Study'],['english','English'],['gym','Gym'],['meal','Meal'],['routine','Routine'],['recovery','Recovery'],['sleep','Sleep']];
   return `<div class="daycard">
-    <div class="daycard-head"><b>${label}</b><div class="pillrow" style="margin:0;">
-      <button class="pill ${sc.isUniversityDay?'active':''}" onclick="toggleScheduleFlag('${k}','isUniversityDay')">Uni day</button>
-      <button class="pill ${sc.heavy?'active':''}" onclick="toggleScheduleFlag('${k}','heavy')">Heavy</button>
-      <button class="pill ${sc.isPowerDay?'active':''}" onclick="toggleScheduleFlag('${k}','isPowerDay')">🔥 Off day</button>
-    </div></div>
-    <div style="font-size:11px;color:var(--text-faint);margin:6px 0 12px;">No hourly timetable. Set meaningful daily targets only.</div>
+    <div class="daycard-head"><b>${label}</b>
+      <div class="pillrow" style="margin:0;">
+        <button class="pill ${sc.isUniversityDay?'active':''}" onclick="toggleScheduleFlag('${k}','isUniversityDay')">Uni day</button>
+        <button class="pill ${sc.heavy?'active':''}" onclick="toggleScheduleFlag('${k}','heavy')">Heavy</button>
+        <button class="pill ${sc.isPowerDay?'active':''}" onclick="toggleScheduleFlag('${k}','isPowerDay')">🔥 Power</button>
+        <button class="pill ${sc.powerCapacityDay?'active':''}" onclick="toggleScheduleFlag('${k}','powerCapacityDay')">12–15h day</button>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px;"><label>Home time</label><input type="time" value="${sc.homeTime||''}" onchange="setSchedule('${k}','homeTime',this.value)"></div>
+    <div style="font-size:11px;color:var(--text-faint);margin:6px 0 4px;">Full-day timeline — every block is editable</div>
+    ${sc.blocks.map((b,i)=>`
+      <div class="break-row">
+        <input type="time" value="${b.start}" onchange="setBlockField('${k}',${i},'start',this.value)" style="flex:0 0 78px;">
+        <input type="time" value="${b.end}" onchange="setBlockField('${k}',${i},'end',this.value)" style="flex:0 0 78px;">
+        <input value="${b.label}" onchange="setBlockField('${k}',${i},'label',this.value)" style="flex:1;min-width:80px;">
+        <select onchange="setBlockField('${k}',${i},'type',this.value)" style="flex:0 0 82px;">
+          ${typeOptions.map(([v,l])=>`<option value="${v}" ${b.type===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+        ${b.type==='break'?`<button class="mini-btn" style="flex:0 0 30px;background:${b.offline?'var(--accent-dim)':'var(--surface3)'};" onclick="toggleBlockOffline('${k}',${i})" title="Offline block">📴</button>`:''}
+        <button class="mini-btn" style="flex:0 0 30px;" onclick="removeBlock('${k}',${i})">✕</button>
+      </div>`).join('')}
+    <div class="chiprow" style="margin-top:8px;">
+      ${typeOptions.map(([v,l])=>`<button class="chip" onclick="addBlock('${k}','${v}')">+ ${l}</button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin:12px 0 6px;">Targets</div>
     <div class="row2">
-      <div class="field"><label>University study (min)</label><input type="number" value="${sc.studyTarget}" onchange="setScheduleNum('${k}','studyTarget',this.value)"></div>
-      <div class="field"><label>English (min)</label><input type="number" value="${sc.englishTarget}" onchange="setScheduleNum('${k}','englishTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Study target (min)</label><input type="number" value="${sc.studyTarget}" onchange="setScheduleNum('${k}','studyTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>English target (min)</label><input type="number" value="${sc.englishTarget}" onchange="setScheduleNum('${k}','englishTarget',this.value)"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>Prospecting records</label><input type="number" value="${sc.prospectingTarget}" onchange="setScheduleNum('${k}','prospectingTarget',this.value)"></div>
-      <div class="field"><label>Portfolio / client build (min)</label><input type="number" value="${sc.buildTarget}" onchange="setScheduleNum('${k}','buildTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Business deep work target (min)</label><input type="number" value="${sc.businessDeepWorkTarget||0}" onchange="setScheduleNum('${k}','businessDeepWorkTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Build target (min)</label><input type="number" value="${sc.buildTarget}" onchange="setScheduleNum('${k}','buildTarget',this.value)"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>Study good emails (min)</label><input type="number" value="${sc.emailStudyTarget||0}" onchange="setScheduleNum('${k}','emailStudyTarget',this.value)"></div>
-      <div class="field"><label>Email writing (min)</label><input type="number" value="${sc.emailWritingTarget||0}" onchange="setScheduleNum('${k}','emailWritingTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Prospecting target</label><input type="number" value="${sc.prospectingTarget}" onchange="setScheduleNum('${k}','prospectingTarget',this.value)"></div>
+      <div class="field" style="margin-bottom:6px;"><label>Sales capacity</label><input type="number" value="${sc.salesCapacity}" onchange="setScheduleNum('${k}','salesCapacity',this.value)"></div>
     </div>
-    <div class="field"><label>Business lesson (min)</label><input type="number" value="${sc.businessLearningTarget||0}" onchange="setScheduleNum('${k}','businessLearningTarget',this.value)"></div>
   </div>`;
 }
 function renderTargetSettings(){
@@ -2180,7 +2375,7 @@ function openQuickSheet(){
       <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('clientWork',${a})">+${a}</button>`).join('')}</div>
       <div class="section-label">Build (portfolio/client)</div>
       <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('portfolio',${a})">+${a}</button>`).join('')}</div>
-      <div class="section-label">Business lesson</div>
+      <div class="section-label">Business learning</div>
       <div class="btnrow">${[10,20,30].map(a=>`<button class="qbtn" onclick="bump('businessLearning',${a})">+${a}</button>`).join('')}</div>
       <button class="btn-secondary" onclick="closeModal()">CLOSE</button>
     </div>
@@ -2259,7 +2454,7 @@ function importJSON(){
         if(r.businessMinutes==null) r.businessMinutes=0;
         if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      if(!DB.schemaVersion)DB.schemaVersion=6;
+      if(!DB.schemaVersion)DB.schemaVersion=5;
       STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
       const ok=await persistNow();
       applyTheme();
@@ -2281,7 +2476,7 @@ function confirmReset(){
 async function doReset(){
   STORAGE_UNAVAILABLE=false;
   try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
-  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:6};
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
   await persistNow();
   closeModal(); applyTheme(); render();
 }
