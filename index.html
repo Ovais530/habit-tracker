@@ -349,27 +349,34 @@ function morningBlocks(){
   return [rt('06:00','06:30','Wake · Fajr · Water · Morning routine'), ml('06:30','07:00','Breakfast')];
 }
 // evening tail shared by the four university days — starts once the last
-// campus block ends at 16:05 for all of them.
+// campus block ends at 16:05 for all of them. University study & English
+// are NOT scheduled here — they happen informally during uni/commute
+// breaks (see the daytime blocks + suggestBreakActivity). After coming
+// home, the routine is: quick email review, email-writing practice, then
+// business/outreach until gym.
 function eveningTail(opts){
   opts=opts||{};
-  const skipSecondBusiness=!!opts.skipSecondBusiness;
+  const heavy=!!opts.heavy;
   const gymToday=opts.gym!==false;
   const blocks=[
     bb('16:05','16:35','Commute / recovery',true),
     ml('16:35','17:05','Recovery / Dinner'),
-    bz('17:05','18:05'),
-    sy('18:05','19:05'),
-    en('19:05','19:35')
+    bz('17:05','17:20','Review good emails (swipe file) — 15 min'),
+    bz('17:20','17:50','Email writing practice — 15–30 min')
   ];
-  if(skipSecondBusiness) blocks.push(rc('19:35','20:35','Recovery / light review'));
-  else blocks.push(bz('19:35','20:35','Business deep work / build'));
+  if(heavy){
+    blocks.push(rc('17:50','18:20','Recovery / light review'));
+    blocks.push(bz('18:20','20:35','Business deep work / outreach / client work / portfolio'));
+  }else{
+    blocks.push(bz('17:50','20:35','Business deep work / outreach / client work / portfolio'));
+  }
   if(gymToday) blocks.push(gb('20:35','21:35'));
   else blocks.push(rc('20:35','21:35','Recovery'));
   blocks.push(rt('21:35','22:10','Shutdown · Skincare · Prepare for sleep'));
   blocks.push(sm('22:30'));
   return blocks;
 }
-// exact power-day template as specified — used for Thu/Sat/Sun.
+// exact power-day template as specified — used for Wed/Sat/Sun.
 function powerDayBlocks(opts){
   opts=opts||{};
   const gymToday=opts.gym!==false;
@@ -395,29 +402,29 @@ function powerDayBlocks(opts){
 }
 function defaultSettings(){
   return {
-    schemaVersion:5,
+    schemaVersion:7,
     wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
     weekSchedule:{
       mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
         blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','08:50','Ideology & Constitution'),cb('08:55','09:45','Ideology & Constitution'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Finance'),cb('11:40','12:30','Psychology'),bb('12:35','13:25','Free',true),cb('13:30','14:20','Civics & Community'),cb('14:25','15:15','Business Finance'),cb('15:20','16:05','Business Finance'),
+          cb('08:00','09:45','Classes — Ideology & Constitution'),bb('09:50','10:40','Free — English/study break',true),cb('10:45','12:30','Classes — Business Finance / Psychology'),bb('12:35','13:25','Free — English/study break',true),cb('13:30','16:05','Classes — Civics & Community / Business Finance'),
           ...eveningTail()],
         studyTarget:60, englishTarget:30, buildTarget:45, prospectingTarget:0, salesCapacity:50 },
       tue:{ isUniversityDay:true, heavy:false, isPowerDay:true, powerCapacityDay:false, homeTime:'11:45',
         blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','08:50','Intro to OOP'),bb('08:55','09:45','Free',true),cb('09:50','10:40','Psychology'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free — home, business if online',false),bb('12:35','13:25','Free — home, business if online',false),cb('13:30','14:20','Intro to OOP'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          cb('08:00','08:50','Classes — Intro to OOP'),bb('08:55','09:45','Free — English/study break',true),cb('09:50','10:40','Classes — Psychology'),bb('10:45','13:25','Free — home, business if online',false),cb('13:30','14:20','Classes — Intro to OOP'),bb('14:25','16:05','Free — business',false),
           ...eveningTail()],
         studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
-      wed:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
-        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','08:50','Business Math II'),cb('08:55','09:45','Business Math II'),bb('09:50','10:40','Free',true),cb('10:45','11:35','Business Economics'),cb('11:40','12:30','Business Math II'),cb('12:35','13:25','Business Economics'),bb('13:30','14:20','Free',true),cb('14:25','15:15','Civics & Community'),cb('15:20','16:05','Intro to OOP'),
-          ...eveningTail({skipSecondBusiness:true})],
-        studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
-      thu:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
+      wed:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
         blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:90, prospectingTarget:50, salesCapacity:50, businessDeepWorkTarget:240 },
+      thu:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
+        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
+          cb('08:00','09:45','Classes — Business Math II'),bb('09:50','10:40','Free — English/study break',true),cb('10:45','13:25','Classes — Business Economics / Math II'),bb('13:30','14:20','Free — English/study break',true),cb('14:25','16:05','Classes — Civics & Community / OOP'),
+          ...eveningTail({heavy:true})],
+        studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
       fri:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'12:45',
         blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','08:50','OOP Lab'),cb('08:55','09:45','OOP Lab'),cb('09:50','10:40','OOP Lab'),bb('10:45','11:35','Free',true),bb('11:40','12:30','Free',true),bb('12:35','13:25','Jummah prep / lunch',true),cb('13:30','14:20','Business Economics'),bb('14:25','15:15','Free — business',false),bb('15:20','16:05','Free — business',false),
+          cb('08:00','10:40','Classes — OOP Lab'),bb('10:45','12:30','Free — English/study break',true),bb('12:35','13:25','Jummah prep / lunch',true),cb('13:30','14:20','Classes — Business Economics'),bb('14:25','16:05','Free — business',false),
           ...eveningTail()],
         studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
       sat:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
@@ -445,7 +452,7 @@ function defaultSettings(){
   };
 }
 const CATEGORY_LABELS={business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',study:'Study',english:'English',gym:'Gym',morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work',classes:'Classes'};
-const ENGLISH_ROTATION={mon:'Listening',tue:'Speaking',wed:'Reading',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Reading'};
+const ENGLISH_ROTATION={mon:'Listening',tue:'Reading',wed:'Speaking',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Speaking'};
 function defaultRecord(dateStr){
   return {
     date:dateStr,
@@ -597,6 +604,28 @@ async function loadDB(){
       DB.schemaVersion=5;
       saveDB();
     }
+    if(DB.schemaVersion<6){
+      // schema v6: uni-day daytime schedule was simplified (merged class
+      // blocks, dropped the after-home study/english slots in favour of
+      // a short email-review/writing-practice routine) and the English
+      // rotation now reserves Speaking for off days only. Only overwrite
+      // the schedule if it still looks like the old default shape, so any
+      // custom edits the user already made to their blocks aren't clobbered.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.schemaVersion=6;
+      saveDB();
+    }
+    if(DB.schemaVersion<7){
+      // schema v7: off days moved from Thu/Sat/Sun to Wed/Sat/Sun (Wed and
+      // Thu swap roles — Thu is now the heavy university day, Wed is now a
+      // power day), the English rotation shifted to match, and the
+      // Business Learning quick-log buttons changed from +10/+20/+30 to
+      // +15/+30 to better fit its 20-minute target. Re-apply the default
+      // weekly schedule so existing users pick up the new day roles.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.schemaVersion=7;
+      saveDB();
+    }
   }else if(readFailed){
     // CRITICAL: local storage could not be read (IndexedDB unavailable,
     // private browsing, corrupted DB, blocked by another tab, etc). Do NOT
@@ -604,12 +633,12 @@ async function loadDB(){
     // any real data already on this device the moment storage recovers.
     // Run this session entirely in memory instead and tell the user clearly.
     console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
     STORAGE_UNAVAILABLE=true;
     showStorageErrorBanner();
   }else{
     // Genuinely first launch on this device: no error, just nothing stored yet.
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
     await persistNow();
   }
 }
@@ -771,7 +800,8 @@ function getMissions(dateStr){
   if(exam==='exam')studyTarget=Math.max(sc.studyTarget,240);
   missions.push({key:'study',label:'UNIVERSITY STUDY',icon:'🎓',current:rec.study,
     target:studyTarget,type:'counter',
-    field:'study',amounts: studyTarget>=150?[30,60,90]:[15,30,60],unit:'min'});
+    field:'study',amounts: studyTarget>=150?[30,60,90]:[15,30,60],unit:'min',
+    sub:sc.isUniversityDay?'Watch pre-downloaded lecture material in your breaks — no internet needed':undefined});
   missions.push({key:'english',label:'ENGLISH',icon:'🇬🇧',current:rec.english,target:sc.englishTarget,type:'counter',
     field:'english',amounts:[15,30],unit:'min',sub:`Today's focus: ${ENGLISH_ROTATION[dayAbbr(dateStr)]}`});
   if(sc.buildTarget>0 && exam==='normal'){
@@ -780,7 +810,7 @@ function getMissions(dateStr){
   }
   if(s.targets.businessLearningEnabled && s.targets.businessLearning>0 && exam==='normal'){
     missions.push({key:'businessLearning',label:'BUSINESS LEARNING',icon:'🧠',current:rec.businessLearning,target:s.targets.businessLearning,type:'counter',
-      field:'businessLearning',amounts:[10,20,30],unit:'min',sub:'Secondary — never at the expense of execution'});
+      field:'businessLearning',amounts:[15,30],unit:'min',sub:'Secondary — never at the expense of execution'});
   }
   if(isGymDay(dateStr)){
     missions.push({key:'gym',label:'GYM',icon:'🏋️',current:rec.gymDone?1:0,target:1,type:'toggle',field:'gymDone',sub:'~100 min block: 20 travel + 60 workout + 20 travel'});
@@ -2127,7 +2157,7 @@ function renderTargetSettings(){
     <div class="settings-group-body">
       <div class="row2">
         <div class="field"><label>Weekly outreach target</label><input type="number" value="${t.weeklyOutreachTarget}" onchange="setSetting('targets.weeklyOutreachTarget',this.value,true)"></div>
-        <div class="field"><label>Weekly prospect target (Thu+Sat+Sun)</label><input type="number" value="${t.weeklyProspectTarget}" onchange="setSetting('targets.weeklyProspectTarget',this.value,true)"></div>
+        <div class="field"><label>Weekly prospect target (Wed+Sat+Sun)</label><input type="number" value="${t.weeklyProspectTarget}" onchange="setSetting('targets.weeklyProspectTarget',this.value,true)"></div>
       </div>
       <div class="row2">
         <div class="field"><label>Follow-up ratio (of prior outreach)</label><input type="number" step="0.05" value="${t.followupRatio}" onchange="setSetting('targets.followupRatio',this.value)"></div>
@@ -2145,7 +2175,7 @@ function renderTargetSettings(){
     </div>
   </div>
   <div class="settings-group">
-    <div class="settings-group-head">🔥 Power Day Scoring (Thu/Sat/Sun) — 100 pts</div>
+    <div class="settings-group-head">🔥 Power Day Scoring (Wed/Sat/Sun) — 100 pts</div>
     <div class="settings-group-body">
       <div class="insight" style="margin-bottom:10px;">Power days have far more available time, so they're scored on a completely different points system than university days.</div>
       ${Object.entries(DB.settings.score.power).map(([k,v])=>`
@@ -2154,7 +2184,7 @@ function renderTargetSettings(){
     </div>
   </div>
   <div class="settings-group">
-    <div class="settings-group-head">🎓 University Day Scoring (Mon/Tue/Wed/Fri) — 100 pts</div>
+    <div class="settings-group-head">🎓 University Day Scoring (Mon/Tue/Thu/Fri) — 100 pts</div>
     <div class="settings-group-body">
       ${Object.entries(DB.settings.score.normal).map(([k,v])=>`
         <div class="xrow"><label>${CATEGORY_LABELS[k]||k}</label><input type="number" value="${v}" onchange="setSetting('score.normal.${k}',this.value,true)"></div>`).join('')}
@@ -2376,7 +2406,7 @@ function openQuickSheet(){
       <div class="section-label">Build (portfolio/client)</div>
       <div class="btnrow">${[15,30,60].map(a=>`<button class="qbtn" onclick="bump('portfolio',${a})">+${a}</button>`).join('')}</div>
       <div class="section-label">Business learning</div>
-      <div class="btnrow">${[10,20,30].map(a=>`<button class="qbtn" onclick="bump('businessLearning',${a})">+${a}</button>`).join('')}</div>
+      <div class="btnrow">${[15,30].map(a=>`<button class="qbtn" onclick="bump('businessLearning',${a})">+${a}</button>`).join('')}</div>
       <button class="btn-secondary" onclick="closeModal()">CLOSE</button>
     </div>
   </div>`;
@@ -2454,7 +2484,7 @@ function importJSON(){
         if(r.businessMinutes==null) r.businessMinutes=0;
         if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      if(!DB.schemaVersion)DB.schemaVersion=5;
+      if(!DB.schemaVersion)DB.schemaVersion=7;
       STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
       const ok=await persistNow();
       applyTheme();
@@ -2476,7 +2506,7 @@ function confirmReset(){
 async function doReset(){
   STORAGE_UNAVAILABLE=false;
   try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
-  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:5};
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
   await persistNow();
   closeModal(); applyTheme(); render();
 }
