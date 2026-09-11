@@ -404,35 +404,16 @@ function powerDayBlocks(opts){
 }
 function defaultSettings(){
   return {
-    schemaVersion:8,
+    schemaVersion:9,
     wakeTime:'06:00', sleepTime:'00:00', executionMode:true,
     weekSchedule:{
-      mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
-        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','09:45','Classes — Ideology & Constitution'),bb('09:50','10:40','Free — English/study break',true),cb('10:45','12:30','Classes — Business Finance / Psychology'),bb('12:35','13:25','Free — English/study break',true),cb('13:30','16:05','Classes — Civics & Community / Business Finance'),
-          ...eveningTail()],
-        studyTarget:60, englishTarget:30, buildTarget:45, prospectingTarget:0, salesCapacity:50 },
-      tue:{ isUniversityDay:true, heavy:false, isPowerDay:true, powerCapacityDay:false, homeTime:'11:45',
-        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','08:50','Classes — Intro to OOP'),bb('08:55','09:45','Free — English/study break',true),cb('09:50','10:40','Classes — Psychology'),bb('10:45','13:25','Free — home, business if online',false),cb('13:30','14:20','Classes — Intro to OOP'),bb('14:25','16:05','Free — business',false),
-          ...eveningTail()],
-        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
-      wed:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
-        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:90, prospectingTarget:50, salesCapacity:50, businessDeepWorkTarget:240 },
-      thu:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
-        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','09:45','Classes — Business Math II'),bb('09:50','10:40','Free — English/study break',true),cb('10:45','13:25','Classes — Business Economics / Math II'),bb('13:30','14:20','Free — English/study break',true),cb('14:25','16:05','Classes — Civics & Community / OOP'),
-          ...eveningTail({heavy:true})],
-        studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
-      fri:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'12:45',
-        blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
-          cb('08:00','10:40','Classes — OOP Lab'),bb('10:45','12:30','Free — English/study break',true),bb('12:35','13:25','Jummah prep / lunch',true),cb('13:30','14:20','Classes — Business Economics'),bb('14:25','16:05','Free — business',false),
-          ...eveningTail()],
-        studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
-      sat:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'',
-        blocks:powerDayBlocks(), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240 },
-      sun:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', weeklyReview:true,
-        blocks:powerDayBlocks({gym:false}), studyTarget:270, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240, gymRest:true }
+      mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00', blocks:[rt('06:00','06:45','Wake · Fajr · Freshen · Get ready'),bb('06:45','07:45','Commute · English / business audio',true),bb('08:00','16:00','University',false),bb('16:00','17:00','Commute home',true),ml('17:00','18:00','Dinner + rest'),bz('18:00','20:00','Business — Deep Work'),bb('20:00','20:30','English / Business Learning',false),gb('20:30','21:30'),bz('21:30','23:45','Business — Execution'),rt('23:45','23:59','Shutdown'),sm('23:59')], studyTarget:60, englishTarget:30, buildTarget:45, prospectingTarget:0, salesCapacity:50 },
+      tue:{ isUniversityDay:true, heavy:false, isPowerDay:true, powerCapacityDay:false, homeTime:'17:00', blocks:[rt('06:00','06:45','Morning routine'),bb('06:45','07:45','Commute · audio learning',true),bb('08:00','10:40','University',false),bz('10:45','13:25','Business / Study — Flexible opportunity'),bb('13:25','14:20','University / break',false),bz('14:25','16:00','Business / Study — Flexible opportunity'),bb('16:00','17:00','Commute',true),ml('17:00','18:00','Dinner + rest'),bz('18:00','20:00','Business — Deep Work'),gb('20:00','21:00'),bz('21:00','23:45','Business — Execution'),rt('23:45','23:59','Shutdown'),sm('23:59')], studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      wed:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', blocks:[rt('06:30','07:00','Wake + Fajr + morning routine'),bz('07:00','10:00','Business — Deep Work'),bb('10:00','10:30','Break',false),bz('10:30','13:00','Business — Deep Work'),ml('13:00','14:00','Lunch + recovery'),sy('14:00','16:30','Study'),bb('16:30','17:00','Break',false),bz('17:00','19:00','Business — Execution'),bb('19:00','20:00','English + Email Practice',false),gb('20:00','21:00'),ml('21:00','21:30','Dinner'),bz('21:30','23:30','Business — Execution'),rt('23:30','23:59','Shutdown / planning'),sm('23:59')], studyTarget:150, englishTarget:30, buildTarget:90, prospectingTarget:50, salesCapacity:50, businessDeepWorkTarget:240 },
+      thu:{ isUniversityDay:true, heavy:true, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00', blocks:[rt('06:00','06:45','Morning routine'),bb('06:45','07:45','Commute · audio',true),bb('08:00','16:00','University',false),bb('16:00','17:00','Commute',true),ml('17:00','18:00','Dinner + recovery'),bz('18:00','20:15','Business — Deep Work'),gb('20:15','21:15'),bz('21:15','23:45','Business — Execution'),rt('23:45','23:59','Shutdown'),sm('23:59')], studyTarget:60, englishTarget:30, buildTarget:30, prospectingTarget:0, salesCapacity:50 },
+      fri:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00', blocks:[rt('06:00','06:45','Morning routine'),bb('06:45','07:45','Commute · audio learning',true),bb('08:00','14:20','University',false),bz('14:25','16:00','Business — Flexible opportunity'),bb('16:00','17:00','Commute',true),ml('17:00','18:00','Dinner + recovery'),bz('18:00','20:30','Business — Deep Work'),gb('20:30','21:30'),bz('21:30','23:45','Business — Execution'),rt('23:45','23:59','Shutdown'),sm('23:59')], studyTarget:60, englishTarget:30, buildTarget:90, prospectingTarget:0, salesCapacity:50 },
+      sat:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', blocks:[rt('06:30','07:00','Wake + morning routine'),bz('07:00','10:00','Business — Deep Work'),bb('10:00','10:30','Break',false),bz('10:30','13:00','Business — Deep Work'),ml('13:00','14:00','Lunch + recovery'),sy('14:00','16:30','Study'),bb('16:30','17:00','Break',false),bz('17:00','19:00','Business — Execution'),bb('19:00','20:00','English + Email Practice',false),gb('20:00','21:00'),ml('21:00','21:30','Dinner'),bz('21:30','23:30','Business — Execution'),rt('23:30','23:59','Shutdown / planning'),sm('23:59')], studyTarget:150, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240 },
+      sun:{ isUniversityDay:false, heavy:false, isPowerDay:true, powerCapacityDay:true, homeTime:'', weeklyReview:true, blocks:[rt('06:30','07:00','Wake + morning routine'),bz('07:00','10:00','Business — Deep Work'),bb('10:00','10:30','Break',false),bz('10:30','13:00','Business — Deep Work'),ml('13:00','14:00','Lunch + recovery'),sy('14:00','16:30','Study'),bb('16:30','17:00','Break',false),bz('17:00','19:00','Business — Execution'),bb('19:00','19:30','English',false),bb('19:30','20:00','Email analysis + writing',false),ml('20:00','21:00','Dinner / recovery'),bz('21:00','22:00','Business — Weekly review + planning'),bz('22:00','23:30','Business — Light execution'),rt('23:30','23:59','Shutdown'),sm('23:59')], studyTarget:150, englishTarget:30, buildTarget:120, prospectingTarget:125, salesCapacity:0, businessDeepWorkTarget:240, gymRest:true }
     },
     targets:{
       outreach:{ university:{min:10,std:50,stretch:75}, power:{min:10,std:100,stretch:150} },
@@ -445,7 +426,7 @@ function defaultSettings(){
       revenueGoal:2000
     },
     xp:{ outreach25:25,outreach50:50,outreach75:75,outreach100:100, followup:1, positiveReply:25, call:50, client:500,
-         study30:25, study60:50, english30:25, gym:50, morningRoutine:25, nightRoutine:25, sleepTarget:25, classAttended:100 },
+         study30:25, study60:50, english30:25, gym:50, morningRoutine:25, nightRoutine:25, sleepTarget:25 },
     score:{
       power:{business:30, prospecting:15, outreach:10, followups:5, study:20, english:5, gym:5, morningRoutine:3, nightRoutine:3, deepWork:4},
       normal:{business:30, classes:10, study:10, gym:10, followups:5, english:5, morningRoutine:5, nightRoutine:5, outreach:10, prospecting:5, deepWork:5}
@@ -453,7 +434,7 @@ function defaultSettings(){
     theme:'dark'
   };
 }
-const CATEGORY_LABELS={business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',study:'Study',english:'English',gym:'Gym',morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work',classes:'Classes'};
+const CATEGORY_LABELS={business:'Business',prospecting:'Prospecting',outreach:'Outreach',followups:'Follow-ups',study:'Study',english:'English',gym:'Gym',morningRoutine:'Morning',nightRoutine:'Night',deepWork:'Deep Work'};
 const ENGLISH_ROTATION={mon:'Listening',tue:'Reading',wed:'Speaking',thu:'Writing',fri:'Listening',sat:'Speaking',sun:'Speaking'};
 function defaultRecord(dateStr){
   return {
@@ -636,6 +617,18 @@ async function loadDB(){
       DB.settings.weekSchedule=defaultSettings().weekSchedule;
       if(DB.settings.sleepTime==='22:30') DB.settings.sleepTime='00:00';
       DB.schemaVersion=8;
+      saveDB();
+    }
+    if(DB.schemaVersion<9){
+      // schema v9: remove university class blocks from the timetable and class attendance tracking.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.schemaVersion=9;
+      saveDB();
+    }
+    if(DB.schemaVersion<10){
+      // schema v10: apply the user's updated weekly business/study schedule.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      DB.schemaVersion=10;
       saveDB();
     }
   }else if(readFailed){
@@ -873,13 +866,17 @@ function scoreBreakdown(dateStr){
   let businessRatio;
   if(rec.clientWorkTarget>0) businessRatio=Math.min(1,rec.clientWork/rec.clientWorkTarget);
   else if(sc.businessDeepWorkTarget>0) businessRatio=Math.min(1,(rec.businessMinutes||0)/sc.businessDeepWorkTarget);
-  else businessRatio=(outreachRatio+fupRatio)/2;
+  else {
+    const businessParts=[];
+    if(ot.std>0) businessParts.push(outreachRatio);
+    if(rec.followupsDue>0) businessParts.push(fupRatio);
+    businessRatio=businessParts.length?businessParts.reduce((a,b)=>a+b,0)/businessParts.length:0;
+  }
   const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
   const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
   const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
   const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
   const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
-  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0.4):1;
   const deepWorkRatio=rec.deepWorkClean?1:0;
 
   const ratios=isPower
@@ -1003,7 +1000,6 @@ function sumRange(startStr,days){
     out.xp+=xpForDay(d);
     out.scoreSum+=scoreForDay(d); out.scoreCount++;
     if(rec.sleepHours!=null){out.sleepSum+=rec.sleepHours;out.sleepCount++;}
-    if(rec.classAttended)out.classesAttended++;
     out.assignments+=(rec.assignments||0);
     out.businessLearning+=(rec.businessLearning||0);
     if(rec.night&&rec.night.skincare)out.skincareDays++;
@@ -1464,7 +1460,6 @@ function renderTodayFullExtras(d){
     </div>
     <div class="pillrow" style="margin-top:10px;">
       <button class="pill ${rec.recoveryDay?'active':''}" onclick="toggleField('recoveryDay')">RECOVERY DAY</button>
-      ${getDayType(d)==='university'?`<button class="pill ${rec.classAttended?'active':''}" onclick="toggleField('classAttended')">CLASSES ATTENDED</button>`:''}
       <button class="pill ${rec.deepWorkClean?'active':''}" onclick="toggleField('deepWorkClean')">🎯 DEEP WORK / NO DISTRACTIONS</button>
     </div>
     <div class="field" style="margin-top:10px;margin-bottom:0;">
@@ -1629,7 +1624,6 @@ function renderWeek(){
     ['English (min)',cur.english,prev.english,''],
     ['Gym sessions',cur.gym,prev.gym,''],
     ['Portfolio / build (min)',cur.portfolio,prev.portfolio,''],
-    ['Classes attended',cur.classesAttended,prev.classesAttended,''],
     ['Assignments',cur.assignments,prev.assignments,''],
     ['Business learning (min)',cur.businessLearning,prev.businessLearning,''],
     ['Skincare days',cur.skincareDays,prev.skincareDays,''],
@@ -2119,7 +2113,7 @@ function renderScheduleSettings(){
 }
 function renderDayEditor(k,label){
   const sc=DB.settings.weekSchedule[k];
-  const typeOptions=[['class','Class'],['break','Break'],['business','Business'],['study','Study'],['english','English'],['gym','Gym'],['meal','Meal'],['routine','Routine'],['recovery','Recovery'],['sleep','Sleep']];
+  const typeOptions=[['break','Break'],['business','Business'],['study','Study'],['english','English'],['gym','Gym'],['meal','Meal'],['routine','Routine'],['recovery','Recovery'],['sleep','Sleep']];
   return `<div class="daycard">
     <div class="daycard-head"><b>${label}</b>
       <div class="pillrow" style="margin:0;">
@@ -2210,7 +2204,7 @@ function renderXPSettings(){
   const labels={outreach25:'Outreach ≥25',outreach50:'Outreach ≥50',outreach75:'Outreach ≥75',outreach100:'Outreach ≥100',
     followup:'Per follow-up',positiveReply:'Positive reply',call:'Sales call',client:'Client closed',
     study30:'Study ≥30min',study60:'Study ≥60min',english30:'English ≥30min',gym:'Gym session',
-    morningRoutine:'Morning routine',nightRoutine:'Night routine',sleepTarget:'Sleep target met',classAttended:'Classes attended'};
+    morningRoutine:'Morning routine',nightRoutine:'Night routine',sleepTarget:'Sleep target met'};
   return `<div class="settings-group"><div class="settings-group-head">XP Values</div><div class="settings-group-body">
     ${Object.entries(x).map(([k,v])=>`<div class="xrow"><label>${labels[k]||k}</label><input type="number" value="${v}" onchange="setSetting('xp.${k}',this.value,true)"></div>`).join('')}
   </div></div>`;
@@ -2340,7 +2334,7 @@ function setScheduleNum(day,field,val){
   saveDB(); renderView();
 }
 function addBlock(day,type){
-  const labels={class:'Class',break:'Break',business:'Business deep work',study:'University study',english:'English — 30 minutes',gym:'Gym block — 20 travel + 60 workout + 20 travel',meal:'Meal',routine:'Routine',recovery:'Recovery',sleep:'Sleep target'};
+  const labels={break:'Break',business:'Business deep work',study:'University study',english:'English — 30 minutes',gym:'Gym block — 20 travel + 60 workout + 20 travel',meal:'Meal',routine:'Routine',recovery:'Recovery',sleep:'Sleep target'};
   const start='09:00', end=type==='sleep'?'09:00':'09:50';
   DB.settings.weekSchedule[day].blocks.push({start,end,type,label:labels[type]||type,offline:type==='break'});
   saveDB(); renderView();
