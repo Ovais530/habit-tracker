@@ -372,8 +372,9 @@ function eveningTail(opts){
   }
   if(gymToday) blocks.push(gb('20:35','21:35'));
   else blocks.push(rc('20:35','21:35','Recovery'));
-  blocks.push(rt('21:35','22:10','Shutdown · Skincare · Prepare for sleep'));
-  blocks.push(sm('22:30'));
+  blocks.push(bz('21:35','23:45','Business deep work / outreach / client work / portfolio'));
+  blocks.push(rt('23:45','23:59','Shutdown · Skincare (15 min) · Prepare for sleep'));
+  blocks.push(sm('23:59'));
   return blocks;
 }
 // exact power-day template as specified — used for Wed/Sat/Sun.
@@ -396,14 +397,15 @@ function powerDayBlocks(opts){
     ml('19:40','20:10','Dinner / shower'),
     bz('20:10','21:40','Business deep work / client delivery / follow-ups'),
     en('21:40','22:10'),
-    rt('22:10','22:30','Shutdown · Skincare · Prepare for sleep'),
-    sm('22:30')
+    bz('22:10','23:45','Business deep work / prospect sheet / portfolio'),
+    rt('23:45','23:59','Shutdown · Skincare (15 min) · Prepare for sleep'),
+    sm('23:59')
   ];
 }
 function defaultSettings(){
   return {
-    schemaVersion:7,
-    wakeTime:'06:00', sleepTime:'22:30', executionMode:true,
+    schemaVersion:8,
+    wakeTime:'06:00', sleepTime:'00:00', executionMode:true,
     weekSchedule:{
       mon:{ isUniversityDay:true, heavy:false, isPowerDay:false, powerCapacityDay:false, homeTime:'17:00',
         blocks:[...morningBlocks(), bb('07:00','07:45','Commute',true),
@@ -626,6 +628,16 @@ async function loadDB(){
       DB.schemaVersion=7;
       saveDB();
     }
+    if(DB.schemaVersion<8){
+      // schema v8: shutdown/skincare trimmed to a real 15-minute block
+      // right before sleep, moved to 23:45–23:59 (sleep ~midnight) instead
+      // of ~22:10–22:30 — the freed evening time becomes an extra business
+      // block on both university evenings and power days.
+      DB.settings.weekSchedule=defaultSettings().weekSchedule;
+      if(DB.settings.sleepTime==='22:30') DB.settings.sleepTime='00:00';
+      DB.schemaVersion=8;
+      saveDB();
+    }
   }else if(readFailed){
     // CRITICAL: local storage could not be read (IndexedDB unavailable,
     // private browsing, corrupted DB, blocked by another tab, etc). Do NOT
@@ -633,12 +645,12 @@ async function loadDB(){
     // any real data already on this device the moment storage recovers.
     // Run this session entirely in memory instead and tell the user clearly.
     console.warn('IndexedDB read failed — running in a temporary in-memory session, existing data (if any) was left untouched.',readError);
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:8};
     STORAGE_UNAVAILABLE=true;
     showStorageErrorBanner();
   }else{
     // Genuinely first launch on this device: no error, just nothing stored yet.
-    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
+    DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:8};
     await persistNow();
   }
 }
@@ -2484,7 +2496,7 @@ function importJSON(){
         if(r.businessMinutes==null) r.businessMinutes=0;
         if(r.deepWorkClean==null) r.deepWorkClean=false;
       });
-      if(!DB.schemaVersion)DB.schemaVersion=7;
+      if(!DB.schemaVersion)DB.schemaVersion=8;
       STORAGE_UNAVAILABLE=false; // an explicit import is a good moment to retry local storage
       const ok=await persistNow();
       applyTheme();
@@ -2506,7 +2518,7 @@ function confirmReset(){
 async function doReset(){
   STORAGE_UNAVAILABLE=false;
   try{ await idbClearState(); }catch(e){ console.warn('idbClearState failed (continuing with overwrite)',e); }
-  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:7};
+  DB={settings:defaultSettings(),records:{},goals:defaultGoals(),meta:{bestStreak:0},pool:{ready:0},schemaVersion:8};
   await persistNow();
   closeModal(); applyTheme(); render();
 }
