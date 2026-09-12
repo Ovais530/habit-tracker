@@ -854,28 +854,64 @@ function scoreBreakdown(dateStr){
   const isPower=!!sc.powerCapacityDay;
   const w=isPower?DB.settings.score.power:DB.settings.score.normal;
 
+  // IMPORTANT: a category with no target/requirement on a given day (e.g. no
+  // follow-ups due, no prospecting target on a university day, a gym rest
+  // day, exam mode with zero outreach capacity) must NOT hand out free
+  // "vacuous" credit — that would silently break the hard rule that a
+  // completely empty day scores exactly 0/100. Instead, categories that
+  // aren't applicable that day are dropped from BOTH the numerator and the
+  // weight total, so the remaining 100 points are earned entirely from
+  // whatever *is* actually required of you today.
   const ot=getOutreachTargets(dateStr);
-  const outreachRatio=ot.std>0?Math.min(1,totalOutreach(rec)/ot.std):1;
-  const fupRatio=rec.followupsDue>0?Math.min(1,rec.followupsCompleted/rec.followupsDue):1;
-  const prospectingRatio=sc.prospectingTarget>0?Math.min(1,rec.prospects/sc.prospectingTarget):1;
+  const outreachApplicable=ot.std>0;
+  const outreachRatio=outreachApplicable?Math.min(1,totalOutreach(rec)/ot.std):0;
+
+  const fupApplicable=rec.followupsDue>0;
+  const fupRatio=fupApplicable?Math.min(1,rec.followupsCompleted/rec.followupsDue):0;
+
+  const prospectingApplicable=sc.prospectingTarget>0;
+  const prospectingRatio=prospectingApplicable?Math.min(1,rec.prospects/sc.prospectingTarget):0;
+
+  // Business is always applicable — it's the core objective and there is
+  // always something business-related that can be done — so it never gets
+  // excluded, but it must never average in a category that wasn't earned.
   let businessRatio;
   if(rec.clientWorkTarget>0) businessRatio=Math.min(1,rec.clientWork/rec.clientWorkTarget);
   else if(sc.businessDeepWorkTarget>0) businessRatio=Math.min(1,(rec.businessMinutes||0)/sc.businessDeepWorkTarget);
-  else businessRatio=(outreachRatio+fupRatio)/2;
+  else if(outreachApplicable && fupApplicable) businessRatio=(outreachRatio+fupRatio)/2;
+  else if(outreachApplicable) businessRatio=outreachRatio;
+  else if(fupApplicable) businessRatio=fupRatio;
+  else businessRatio=0;
+
   const studyRatio=Math.min(1,rec.study/Math.max(1,sc.studyTarget));
   const englishRatio=Math.min(1,rec.english/Math.max(1,sc.englishTarget));
-  const fitnessRatio=isGymDay(dateStr)?(rec.gymDone?1:0):1;
+  const gymApplicable=isGymDay(dateStr);
+  const fitnessRatio=gymApplicable?(rec.gymDone?1:0):0;
   const morningRatio=Object.values(rec.morning).filter(Boolean).length/6;
   const nightRatio=Object.values(rec.night).filter(Boolean).length/6;
-  const classesRatio=getDayType(dateStr)==='university'?(rec.classAttended?1:0.4):1;
+  const classesApplicable=getDayType(dateStr)==='university';
+  const classesRatio=classesApplicable?(rec.classAttended?1:0):0;
   const deepWorkRatio=rec.deepWorkClean?1:0;
 
-  const ratios=isPower
-    ? {business:businessRatio,prospecting:prospectingRatio,outreach:outreachRatio,followups:fupRatio,study:studyRatio,english:englishRatio,gym:fitnessRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,deepWork:deepWorkRatio}
-    : {business:businessRatio,classes:classesRatio,study:studyRatio,gym:fitnessRatio,followups:fupRatio,english:englishRatio,morningRoutine:morningRatio,nightRoutine:nightRatio,outreach:outreachRatio,prospecting:prospectingRatio,deepWork:deepWorkRatio};
+  // key -> [ratio, applicable]. study/english/morning/night/deepWork/business
+  // are always applicable (there's always a study/English/routine target and
+  // business always has *some* required action), so they're always scored.
+  const all=isPower
+    ? {business:[businessRatio,true],prospecting:[prospectingRatio,prospectingApplicable],outreach:[outreachRatio,outreachApplicable],followups:[fupRatio,fupApplicable],study:[studyRatio,true],english:[englishRatio,true],gym:[fitnessRatio,gymApplicable],morningRoutine:[morningRatio,true],nightRoutine:[nightRatio,true],deepWork:[deepWorkRatio,true]}
+    : {business:[businessRatio,true],classes:[classesRatio,classesApplicable],study:[studyRatio,true],gym:[fitnessRatio,gymApplicable],followups:[fupRatio,fupApplicable],english:[englishRatio,true],morningRoutine:[morningRatio,true],nightRoutine:[nightRatio,true],outreach:[outreachRatio,outreachApplicable],prospecting:[prospectingRatio,prospectingApplicable],deepWork:[deepWorkRatio,true]};
 
-  const totalW=Object.values(w).reduce((a,b)=>a+b,0)||100;
-  let score=Math.round(Object.keys(ratios).reduce((sum,k)=>sum+ratios[k]*(w[k]||0),0)/totalW*100);
+  const ratios={};
+  let numerator=0, totalW=0;
+  Object.keys(all).forEach(k=>{
+    const [ratio,applicable]=all[k];
+    if(!applicable) return; // excluded entirely — no vacuous credit, no phantom weight
+    ratios[k]=ratio;
+    const weight=w[k]||0;
+    numerator+=ratio*weight;
+    totalW+=weight;
+  });
+
+  let score=totalW>0?Math.round(numerator/totalW*100):0;
   if(rec.recoveryDay) score=Math.max(score,70);
   score=Math.max(0,Math.min(100,score));
   return {ratios,weights:w,score,isPower};
@@ -970,7 +1006,7 @@ function graphCard(title,values,color,unit){
   </div>`;
 }
 function sumRange(startStr,days){
-  const out={outreach:0,followups:0,prospects:0,replies:0,positiveReplies:0,calls:0,clients:0,revenue:0,study:0,english:0,gym:0,portfolio:0,xp:0,scoreSum:0,scoreCount:0,sleepSum:0,sleepCount:0,
+  const out={outreach:0,followups:0,prospects:0,audited:0,contactsFound:0,replies:0,positiveReplies:0,calls:0,clients:0,revenue:0,study:0,english:0,gym:0,portfolio:0,xp:0,scoreSum:0,scoreCount:0,sleepSum:0,sleepCount:0,
     classesAttended:0,assignments:0,businessLearning:0,skincareDays:0};
   for(let i=0;i<days;i++){
     const d=addDays(startStr,i);
@@ -979,6 +1015,8 @@ function sumRange(startStr,days){
     out.outreach+=totalOutreach(rec);
     out.followups+=rec.followupsCompleted;
     out.prospects+=rec.prospects;
+    out.audited+=(rec.audited||0);
+    out.contactsFound+=(rec.contactsFound||0);
     out.replies+=rec.replies;
     out.positiveReplies+=rec.positiveReplies;
     out.calls+=rec.calls;
@@ -1429,6 +1467,10 @@ function renderTodayFullExtras(d){
     <div class="statgrid">
       <div class="stat"><div class="stat-num">${rec.prospects}</div><div class="stat-label">Prospects</div>
         <div class="stat-btns"><button class="mini-btn" onclick="bump('prospects',5)">+5</button><button class="mini-btn" onclick="bump('prospects',10)">+10</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.audited||0}</div><div class="stat-label">Audited</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('audited',5)">+5</button><button class="mini-btn" onclick="bump('audited',10)">+10</button></div></div>
+      <div class="stat"><div class="stat-num">${rec.contactsFound||0}</div><div class="stat-label">Verified emails</div>
+        <div class="stat-btns"><button class="mini-btn" onclick="bump('contactsFound',5)">+5</button><button class="mini-btn" onclick="bump('contactsFound',10)">+10</button></div></div>
       <div class="stat"><div class="stat-num">${rec.replies}</div><div class="stat-label">Replies</div>
         <div class="stat-btns"><button class="mini-btn" onclick="bump('replies',1)">+1</button><button class="mini-btn" onclick="bump('positiveReplies',1)">+POS</button></div></div>
       <div class="stat"><div class="stat-num">${rec.calls}</div><div class="stat-label">Calls</div>
@@ -1608,6 +1650,8 @@ function renderWeek(){
     ['Outreach',cur.outreach,prev.outreach,''],
     ['Follow-ups',cur.followups,prev.followups,''],
     ['Prospects',cur.prospects,prev.prospects,''],
+    ['Audited',cur.audited,prev.audited,''],
+    ['Verified emails',cur.contactsFound,prev.contactsFound,''],
     ['Replies',cur.replies,prev.replies,''],
     ['Positive replies',cur.positiveReplies,prev.positiveReplies,''],
     ['Calls',cur.calls,prev.calls,''],
@@ -1767,8 +1811,9 @@ function renderAnalytics(){
   let graphs='';
   if(UI.analyticsTab==='business'){
     const funnel=[
-      ['Prospects',cur.prospects],['Outreach',cur.outreach],['Replies',cur.replies],
-      ['Positive',cur.positiveReplies],['Calls',cur.calls],['Clients',cur.clients]
+      ['Prospects found',cur.prospects],['Audited',cur.audited],['Verified emails',cur.contactsFound],
+      ['Ready (pool)',DB.pool.ready||0],['Outreach sent',cur.outreach],['Follow-ups',cur.followups],
+      ['Replies',cur.replies],['Positive',cur.positiveReplies],['Calls',cur.calls],['Clients',cur.clients]
     ];
     const maxF=Math.max(1,...funnel.map(f=>f[1]));
     body=`
@@ -2395,6 +2440,10 @@ function openQuickSheet(){
       <div class="btnrow">${[5,10].map(a=>`<button class="qbtn" onclick="bump('followupsCompleted',${a})">+${a}</button>`).join('')}</div>
       <div class="section-label">Prospects</div>
       <div class="btnrow">${[5,10,25].map(a=>`<button class="qbtn" onclick="bump('prospects',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Audited</div>
+      <div class="btnrow">${[5,10,25].map(a=>`<button class="qbtn" onclick="bump('audited',${a})">+${a}</button>`).join('')}</div>
+      <div class="section-label">Verified emails</div>
+      <div class="btnrow">${[5,10,25].map(a=>`<button class="qbtn" onclick="bump('contactsFound',${a})">+${a}</button>`).join('')}</div>
       <div class="section-label">Business deep work</div>
       <div class="btnrow">${[30,60,90].map(a=>`<button class="qbtn" onclick="bump('businessMinutes',${a})">+${a}</button>`).join('')}</div>
       <div class="section-label">Study</div>
@@ -2449,11 +2498,11 @@ function exportJSON(){
 }
 function exportCSV(){
   const dates=Object.keys(DB.records).sort();
-  const headers=['date','outreach','followups_completed','followups_due','prospects','replies','positive_replies','calls','clients','revenue','study_min','english_min','gym','portfolio_min','business_deep_work_min','business_learning_min','assignments','exam_mode','score','xp'];
+  const headers=['date','outreach','followups_completed','followups_due','prospects','audited','verified_emails','replies','positive_replies','calls','clients','revenue','study_min','english_min','gym','portfolio_min','business_deep_work_min','business_learning_min','assignments','exam_mode','score','xp'];
   let rows=[headers.join(',')];
   dates.forEach(d=>{
     const r=DB.records[d];
-    rows.push([d,totalOutreach(r),r.followupsCompleted,r.followupsDue,r.prospects,r.replies,r.positiveReplies,r.calls,r.clientsClosed,r.revenue,r.study,r.english,r.gymDone?1:0,r.portfolio,r.businessMinutes||0,r.businessLearning||0,r.assignments||0,r.examMode||'normal',scoreForDay(d),xpForDay(d)].join(','));
+    rows.push([d,totalOutreach(r),r.followupsCompleted,r.followupsDue,r.prospects,r.audited||0,r.contactsFound||0,r.replies,r.positiveReplies,r.calls,r.clientsClosed,r.revenue,r.study,r.english,r.gymDone?1:0,r.portfolio,r.businessMinutes||0,r.businessLearning||0,r.assignments||0,r.examMode||'normal',scoreForDay(d),xpForDay(d)].join(','));
   });
   const blob=new Blob([rows.join(String.fromCharCode(10))],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
